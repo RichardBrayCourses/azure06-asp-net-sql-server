@@ -9,7 +9,7 @@ export const entraConfig = {
   authority,
   apiScope,
   redirectPath: ENTRA_CALLBACK_PATH,
-  scopes: apiScope ? [apiScope] : ["openid", "profile", "email"],
+  signInScopes: ["openid", "profile", "email"],
 };
 
 export function getEntraRedirectUri() {

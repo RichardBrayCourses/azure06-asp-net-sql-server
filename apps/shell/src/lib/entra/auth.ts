@@ -60,7 +60,7 @@ export async function startEntraLogin(selection: EntraPendingSelection) {
   window.localStorage.setItem(pendingSelectionKey, JSON.stringify(selection));
   await ensureMsalInitialized();
   await msalInstance.loginRedirect({
-    scopes: entraConfig.scopes,
+    scopes: entraConfig.signInScopes,
     loginHint: selection.email,
     redirectUri: getEntraRedirectUri(),
     prompt: "select_account",
