@@ -45,7 +45,7 @@ Files:
 
 Seed data lives in `src/AllChecksOut.Infrastructure/AllChecksOutSeedData.cs`.
 
-It preserves the current UI demo IDs from `apps/ui/src/data/console.ts`, including the Northstar/Digital Platform Assurance Association scenario, participants, stakeholders, agents, user accounts, memberships, access grants, participant suppliers, templates, cases, tasks, reviews, and RFIs.
+It preserves the current UI demo IDs from `apps/shell/src/data/console.ts`, including the Northstar/Digital Platform Assurance Association scenario, participants, stakeholders, agents, user accounts, memberships, access grants, participant suppliers, templates, cases, tasks, reviews, and RFIs.
 
 ## Local SQL
 
@@ -99,7 +99,7 @@ Passed:
 ```bash
 dotnet build AllChecksOut.sln
 dotnet test AllChecksOut.sln
-pnpm run ui:build
+pnpm run shell:build
 ```
 
 Migration listing:

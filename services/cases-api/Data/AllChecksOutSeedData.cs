@@ -1,7 +1,7 @@
-using AllChecksOut.Domain;
+using AllChecksOut.Cases.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace AllChecksOut.Infrastructure;
+namespace AllChecksOut.Cases.Api.Data;
 
 internal static class AllChecksOutSeedData
 {
@@ -117,7 +117,7 @@ internal static class AllChecksOutSeedData
         modelBuilder.Entity<TemplateTask>().HasData(TemplateTasks());
         modelBuilder.Entity<Case>().HasData(Cases());
         modelBuilder.Entity<CaseTemplateParticipant>().HasData(CaseTemplateParticipants());
-        modelBuilder.Entity<AllChecksOut.Domain.Task>().HasData(Tasks());
+        modelBuilder.Entity<AllChecksOut.Cases.Api.Entities.Task>().HasData(Tasks());
         modelBuilder.Entity<StakeholderReview>().HasData(
             Review("review-harrington-northstar", "harrington-financial", "case-2026-northstar", "Security and subprocessor evidence is under procurement review.", "user-rachel-morgan"),
             Review("review-harrington-cobalt", "harrington-financial", "case-2026-cobalt", "Waiting for Cobalt to submit the full Case.", "user-rachel-morgan"),
@@ -270,7 +270,7 @@ internal static class AllChecksOutSeedData
         CaseId = caseId,
     });
 
-    private static AllChecksOut.Domain.Task[] Tasks()
+    private static AllChecksOut.Cases.Api.Entities.Task[] Tasks()
     {
         var annualTemplateTaskIds = new[]
         {
@@ -295,7 +295,7 @@ internal static class AllChecksOutSeedData
             .ToArray();
     }
 
-    private static IEnumerable<AllChecksOut.Domain.Task> BuildAnnualTasks(string participantPrefix, string caseId, string[] templateTaskIds, string[] statuses)
+    private static IEnumerable<AllChecksOut.Cases.Api.Entities.Task> BuildAnnualTasks(string participantPrefix, string caseId, string[] templateTaskIds, string[] statuses)
     {
         for (var i = 0; i < templateTaskIds.Length; i += 1)
         {
@@ -318,7 +318,7 @@ internal static class AllChecksOutSeedData
         }
     }
 
-    private static AllChecksOut.Domain.Task Task(string id, string caseId, string templateTaskId, string status) => Base(new AllChecksOut.Domain.Task
+    private static AllChecksOut.Cases.Api.Entities.Task Task(string id, string caseId, string templateTaskId, string status) => Base(new AllChecksOut.Cases.Api.Entities.Task
     {
         Id = id,
         CaseId = caseId,

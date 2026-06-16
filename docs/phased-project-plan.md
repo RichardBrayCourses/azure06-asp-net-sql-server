@@ -163,10 +163,10 @@ All future functionality should assume authenticated users.
 
 - [ ] Perform Stage 1.5 repository restructure before further API/auth work
 - [ ] Create Azure SQL database
-- [ ] Create ASP.NET Core data access layer
+- [ ] Create ASP.NET Core service data access layer
 - [ ] Introduce Entity Framework Core
-- [ ] Add .NET Application layer for use cases and user/application authorization services
-- [ ] Create migrations project
+- [ ] Add service-local use cases and user/application authorization services where needed
+- [ ] Keep migrations inside the service that owns the data
 - [ ] Create database deployment process
 - [ ] Replace existing persistence mechanism
 - [ ] Implement repository pattern where appropriate
@@ -178,16 +178,19 @@ All future functionality should assume authenticated users.
 
 Use current ASP.NET Core best practices rather than older controller architectures.
 
-The Azure06 repository should use clear frontend/backend separation before Stage 2 authentication work continues. The preferred near-term layout is:
+The Azure06 repository should use deployment-boundary folders before Stage 2 authentication work continues. The preferred near-term layout is:
 
 ```text
 apps/
-  web/
-  api/
-src/
-  AllChecksOut.Domain/
-  AllChecksOut.Application/
-  AllChecksOut.Infrastructure/
+  shell/
+  cases-web/
+  people-web/
+  admin-web/
+services/
+  cases-api/
+  people-api/
+  identity-api/
+  notifications-api/
 tests/
 packages/
 database/
@@ -195,7 +198,7 @@ infra/
   bicep/
 ```
 
-Avoid direct sharing of backend domain models with the TypeScript frontend. The frontend/backend contract should come through the API surface and, later, a generated TypeScript client package.
+Avoid direct sharing of backend domain models with the TypeScript frontend. Avoid shared backend business logic packages. The frontend/backend contract should come through the API surface and, later, generated or explicit frontend contracts.
 
 ---
 
@@ -258,7 +261,7 @@ Uploaded documents should be automatically analysed and verified where possible.
 
 ## Notes
 
-Do not split into microservices until core functionality is complete.
+Keep service boundaries visible from the folder structure, but only extract additional services when ownership and deployment boundaries are real.
 
 ---
 

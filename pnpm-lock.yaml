@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  apps/ui:
+  apps/shell:
     dependencies:
       '@azure/msal-browser':
         specifier: ^5.13.0

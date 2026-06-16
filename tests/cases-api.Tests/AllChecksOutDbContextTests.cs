@@ -1,8 +1,8 @@
-using AllChecksOut.Infrastructure;
+using AllChecksOut.Cases.Api.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace AllChecksOut.Infrastructure.Tests;
+namespace AllChecksOut.Cases.Api.Tests;
 
 public sealed class AllChecksOutDbContextTests
 {

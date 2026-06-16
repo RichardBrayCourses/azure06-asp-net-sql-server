@@ -1,5 +1,6 @@
 packages:
-  - "apps/ui"
+  - "apps/*"
+  - "packages/*"
 allowBuilds:
   esbuild: true
   msw: true

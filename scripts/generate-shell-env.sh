@@ -5,11 +5,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
-OUTPUT_FILE="$MONOREPO_DIR/apps/ui/.env"
-ENVIRONMENT_OUTPUT_FILE="$MONOREPO_DIR/apps/ui/.env.generated.$ENVIRONMENT_NAME"
+OUTPUT_FILE="$MONOREPO_DIR/apps/shell/.env"
+ENVIRONMENT_OUTPUT_FILE="$MONOREPO_DIR/apps/shell/.env.generated.$ENVIRONMENT_NAME"
 
 echo ""
-echo "Reading UI deployment configuration from Azure App Configuration..."
+echo "Reading shell deployment configuration from Azure App Configuration..."
 echo ""
 
 APP_CONFIGURATION_NAME=$(az deployment group show \

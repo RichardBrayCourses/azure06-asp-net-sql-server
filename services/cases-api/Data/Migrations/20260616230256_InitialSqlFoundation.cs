@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace AllChecksOut.Infrastructure.Migrations
+namespace AllChecksOut.Cases.Api.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialSqlFoundation : Migration
@@ -13,8 +13,12 @@ namespace AllChecksOut.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "cases");
+
             migrationBuilder.CreateTable(
                 name: "AccessGrants",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -40,6 +44,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Agents",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -55,6 +60,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AgentUsers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -70,6 +76,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Authorities",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -86,6 +93,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AuthorityTerminologies",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -101,6 +109,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AuthorityUsers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -116,6 +125,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Cases",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -139,6 +149,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "CaseTemplateParticipants",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -158,6 +169,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "CaseTemplates",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -175,6 +187,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Participants",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -190,6 +203,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "ParticipantSuppliers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -209,6 +223,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "ParticipantUsers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -224,6 +239,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "RequestsForInformation",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -251,6 +267,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "StakeholderParticipantAccesses",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -268,6 +285,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "StakeholderReviews",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -286,6 +304,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Stakeholders",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -301,6 +320,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "StakeholderUsers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -316,6 +336,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "SystemOwners",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -330,6 +351,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "SystemOwnerUsers",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -345,6 +367,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Tasks",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -364,6 +387,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "TaskTypes",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -382,6 +406,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "TemplateTasks",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -405,6 +430,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "UserAccounts",
+                schema: "cases",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
@@ -422,6 +448,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "AccessGrants",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "CreatedByUserId", "DataScopeId", "DataScopeType", "ExpiresAt", "GranteeAgentId", "GranteeStakeholderId", "GranteeType", "GranteeUserId", "ParticipantId", "PermissionLevel", "Status", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -436,6 +463,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "AgentUsers",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "EntityId", "UpdatedAt", "UserAccountId" },
                 values: new object[,]
                 {
@@ -446,6 +474,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Agents",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "DisplayName", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -455,16 +484,19 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Authorities",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "Description", "Name", "SystemOwnerId", "UpdatedAt" },
                 values: new object[] { "northstar-association", new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "An authority defining case expectations for member participants.", "Digital Platform Assurance Association", "all-checks-out", new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)) });
 
             migrationBuilder.InsertData(
                 table: "AuthorityTerminologies",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "LabelsJson", "UpdatedAt" },
                 values: new object[] { "terminology-northstar-association", "northstar-association", new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "{\"authority\":{\"singular\":\"authority\",\"plural\":\"authorities\"},\"participant\":{\"singular\":\"participant\",\"plural\":\"participants\"},\"stakeholder\":{\"singular\":\"stakeholder\",\"plural\":\"stakeholders\"},\"agent\":{\"singular\":\"agent\",\"plural\":\"agents\"},\"case\":{\"singular\":\"case\",\"plural\":\"cases\"},\"caseTemplate\":{\"singular\":\"case template\",\"plural\":\"case templates\"},\"task\":{\"singular\":\"task\",\"plural\":\"tasks\"},\"participantSupplier\":{\"singular\":\"participant supplier\",\"plural\":\"participant suppliers\"},\"evidence\":{\"singular\":\"evidence\",\"plural\":\"evidence\"},\"accessGrant\":{\"singular\":\"access grant\",\"plural\":\"access grants\"},\"requestForInformation\":{\"singular\":\"request for information\",\"plural\":\"requests for information\"}}", new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)) });
 
             migrationBuilder.InsertData(
                 table: "AuthorityUsers",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "EntityId", "UpdatedAt", "UserAccountId" },
                 values: new object[,]
                 {
@@ -474,6 +506,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "CaseTemplateParticipants",
+                schema: "cases",
                 columns: new[] { "Id", "CaseId", "CaseTemplateId", "CreatedAt", "DecidedAt", "DecidedByUserId", "ExemptionReason", "ParticipantId", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -486,6 +519,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "CaseTemplates",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "Description", "Name", "Status", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -495,6 +529,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Cases",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CaseTemplateId", "ClosedAt", "CreatedAt", "ParticipantId", "ParticipantSupplierId", "Status", "SubmittedAt", "UpdatedAt", "WithdrawnAt", "WithdrawnByUserId", "WithdrawnReason" },
                 values: new object[,]
                 {
@@ -507,6 +542,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "ParticipantSuppliers",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "DataExposure", "ParticipantId", "RelationshipType", "ServicesProvided", "SupplierName", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -518,6 +554,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "ParticipantUsers",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "EntityId", "UpdatedAt", "UserAccountId" },
                 values: new object[,]
                 {
@@ -532,6 +569,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Participants",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "DisplayName", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -543,6 +581,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "RequestsForInformation",
+                schema: "cases",
                 columns: new[] { "Id", "AssignedToUserId", "AuthorityId", "CaseId", "CreatedAt", "ParticipantId", "RequestText", "RequestedAt", "RequestedByUserId", "RespondedAt", "RespondedByUserId", "ResponseText", "StakeholderId", "Status", "StatusHistoryJson", "TaskId", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -553,6 +592,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "StakeholderParticipantAccesses",
+                schema: "cases",
                 columns: new[] { "Id", "ApprovedAt", "ApprovedByUserId", "CreatedAt", "ParticipantId", "StakeholderId", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -564,6 +604,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "StakeholderReviews",
+                schema: "cases",
                 columns: new[] { "Id", "CaseId", "CreatedAt", "Note", "ReviewedAt", "ReviewedByUserId", "StakeholderId", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -575,6 +616,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "StakeholderUsers",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "EntityId", "UpdatedAt", "UserAccountId" },
                 values: new object[,]
                 {
@@ -586,6 +628,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Stakeholders",
+                schema: "cases",
                 columns: new[] { "Id", "AuthorityId", "CreatedAt", "DisplayName", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -595,11 +638,13 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "SystemOwners",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "Name", "UpdatedAt" },
                 values: new object[] { "all-checks-out", new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "All Checks Out Ltd", new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)) });
 
             migrationBuilder.InsertData(
                 table: "TaskTypes",
+                schema: "cases",
                 columns: new[] { "Id", "Code", "CreatedAt", "Description", "Name", "ParameterSchemaJson", "Status", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -619,6 +664,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Tasks",
+                schema: "cases",
                 columns: new[] { "Id", "CaseId", "CreatedAt", "EvidenceJson", "ResponseJson", "Status", "TemplateTaskId", "UpdatedAt", "WithdrawnAt" },
                 values: new object[,]
                 {
@@ -701,6 +747,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "TemplateTasks",
+                schema: "cases",
                 columns: new[] { "Id", "CaseTemplateId", "CreatedAt", "Description", "ParametersJson", "SortOrder", "Status", "TaskTypeId", "Title", "UpdatedAt", "WithdrawnAt", "WithdrawnByUserId", "WithdrawnReason" },
                 values: new object[,]
                 {
@@ -729,6 +776,7 @@ namespace AllChecksOut.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "UserAccounts",
+                schema: "cases",
                 columns: new[] { "Id", "CreatedAt", "DisplayName", "Email", "EntraObjectId", "Status", "UpdatedAt" },
                 values: new object[,]
                 {
@@ -753,54 +801,63 @@ namespace AllChecksOut.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_AgentUsers_EntityId_UserAccountId",
                 table: "AgentUsers",
+                schema: "cases",
                 columns: new[] { "EntityId", "UserAccountId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthorityTerminologies_AuthorityId",
                 table: "AuthorityTerminologies",
+                schema: "cases",
                 column: "AuthorityId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthorityUsers_EntityId_UserAccountId",
                 table: "AuthorityUsers",
+                schema: "cases",
                 columns: new[] { "EntityId", "UserAccountId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ParticipantUsers_EntityId_UserAccountId",
                 table: "ParticipantUsers",
+                schema: "cases",
                 columns: new[] { "EntityId", "UserAccountId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakeholderUsers_EntityId_UserAccountId",
                 table: "StakeholderUsers",
+                schema: "cases",
                 columns: new[] { "EntityId", "UserAccountId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SystemOwnerUsers_EntityId_UserAccountId",
                 table: "SystemOwnerUsers",
+                schema: "cases",
                 columns: new[] { "EntityId", "UserAccountId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TaskTypes_Code",
                 table: "TaskTypes",
+                schema: "cases",
                 column: "Code",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserAccounts_Email",
                 table: "UserAccounts",
+                schema: "cases",
                 column: "Email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserAccounts_EntraObjectId",
                 table: "UserAccounts",
+                schema: "cases",
                 column: "EntraObjectId",
                 unique: true);
         }
@@ -809,73 +866,96 @@ namespace AllChecksOut.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AccessGrants");
+                name: "AccessGrants",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Agents");
+                name: "Agents",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "AgentUsers");
+                name: "AgentUsers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Authorities");
+                name: "Authorities",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "AuthorityTerminologies");
+                name: "AuthorityTerminologies",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "AuthorityUsers");
+                name: "AuthorityUsers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Cases");
+                name: "Cases",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "CaseTemplateParticipants");
+                name: "CaseTemplateParticipants",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "CaseTemplates");
+                name: "CaseTemplates",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Participants");
+                name: "Participants",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "ParticipantSuppliers");
+                name: "ParticipantSuppliers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "ParticipantUsers");
+                name: "ParticipantUsers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "RequestsForInformation");
+                name: "RequestsForInformation",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "StakeholderParticipantAccesses");
+                name: "StakeholderParticipantAccesses",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "StakeholderReviews");
+                name: "StakeholderReviews",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Stakeholders");
+                name: "Stakeholders",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "StakeholderUsers");
+                name: "StakeholderUsers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "SystemOwners");
+                name: "SystemOwners",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "SystemOwnerUsers");
+                name: "SystemOwnerUsers",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "Tasks");
+                name: "Tasks",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "TaskTypes");
+                name: "TaskTypes",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "TemplateTasks");
+                name: "TemplateTasks",
+                schema: "cases");
 
             migrationBuilder.DropTable(
-                name: "UserAccounts");
+                name: "UserAccounts",
+                schema: "cases");
         }
     }
 }

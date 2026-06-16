@@ -24,11 +24,12 @@ It is based on:
   - Verify a live Azure-hosted single-page application.
 - Current implementation boundary:
   - Stage 1 backend foundation exists.
+  - Stage 1.5 repository boundary restructure exists.
   - Frontend still uses in-memory domain data.
   - In-memory domain data.
   - Entra frontend sign-in exists, but API token-bearing calls are not wired yet.
   - ASP.NET Core API shell exists.
-  - EF Core model, migration, and seed data exist.
+  - EF Core model, migration, and seed data exist inside `services/cases-api`.
   - Local SQL Server Docker Compose support exists.
   - No real file storage workflow yet.
 
@@ -59,58 +60,69 @@ It is based on:
 +-- README.md
 +-- docs
 +-- apps
-|   +-- ui
+|   +-- shell
 |       +-- src
 |       +-- index.html
 |       +-- package.json
 |       +-- vite.config.ts
 |       +-- tsconfig.json
-|   +-- api
-|       +-- AllChecksOut.Api
-+-- src
-|   +-- AllChecksOut.Domain
-|   +-- AllChecksOut.Infrastructure
++-- services
+|   +-- cases-api
+|       +-- Program.cs
+|       +-- Entities
+|       +-- Data
+|           +-- AllChecksOutDbContext.cs
+|           +-- Migrations
 +-- tests
-|   +-- AllChecksOut.Infrastructure.Tests
+|   +-- cases-api.Tests
++-- packages
+|   +-- ui
+|   +-- config
+|   +-- contracts
++-- database
+|   +-- README.md
+|   +-- seed
 +-- environments
 +-- infra
-|   +-- main.bicep
+|   +-- bicep
+|       +-- main.bicep
 +-- docker-compose.sql.yml
 +-- scripts
 |   +-- config.sh
 |   +-- deploy-infra.sh
 |   +-- destroy-infra.sh
 |   +-- show-url.sh
-|   +-- upload-ui.sh
+|   +-- upload-shell.sh
 |   +-- what-if-infra.sh
 +-- pnpm-workspace.yaml
 ```
 
 ## Target Repository Structure
 
-Before Stage 2 authentication work continues, run the Stage 1.5 repository restructure described in `docs/azure06-staged-implementation-plan.md`.
+Stage 1.5 repository restructure is complete. Deployment boundaries are visible from the folder structure.
 
 Target direction:
 
 ```text
 apps/
-  web/                         # React/Vite frontend
-  api/                         # ASP.NET Core API host
+  shell/
+  cases-web/                    # future
+  people-web/                   # future
+  admin-web/                    # future
 
-src/
-  AllChecksOut.Domain/          # .NET entities and domain concepts
-  AllChecksOut.Application/     # use cases, app services, DTOs, user resolution
-  AllChecksOut.Infrastructure/  # EF Core, Azure SQL, external services
+services/
+  cases-api/
+  people-api/                   # future
+  identity-api/                 # future
+  notifications-api/            # future
 
 tests/
-  AllChecksOut.Application.Tests/
-  AllChecksOut.Infrastructure.Tests/
-  AllChecksOut.Api.Tests/
+  cases-api.Tests/
 
 packages/
-  client/                       # generated TypeScript API client, later
-  ui/                           # shared React components, only when useful
-  config/                       # shared frontend config, only when useful
+  ui/
+  config/
+  contracts/
 
 database/
   README.md
@@ -125,10 +137,11 @@ infra/
 
 Do not directly share C# domain models with TypeScript. The frontend/backend boundary should be the HTTP API and, later, a generated TypeScript client.
 
+See `docs/repository-architecture.md` for the repository boundary rules.
+
 ## Frontend Implementation
 
-- Current app location: `apps/ui`
-- Target app location after Stage 1.5: `apps/web`
+- Current app location: `apps/shell`
 - Framework:
   - React 19
   - TypeScript 5.9
@@ -166,7 +179,7 @@ Do not directly share C# domain models with TypeScript. The frontend/backend bou
 
 ## Current Domain Runtime
 
-- Source of truth: `apps/ui/src/data/console.ts`
+- Source of truth: `apps/shell/src/data/console.ts`
 - Storage: in-memory TypeScript entities and DTOs
 - Refresh model:
   - Mutations run through `InMemoryAllChecksOutDatabase`.
@@ -180,6 +193,24 @@ Do not directly share C# domain models with TypeScript. The frontend/backend bou
   - Trade association verification
   - Plumbing and electrical service visits
   - Resident permit renewals
+
+## Backend Service Implementation
+
+- Current service location: `services/cases-api`
+- Project: `services/cases-api/Cases.Api.csproj`
+- Current HTTP endpoints:
+  - `/`
+  - `/health`
+- EF Core ownership:
+  - DbContext: `services/cases-api/Data/AllChecksOutDbContext.cs`
+  - Seed data: `services/cases-api/Data/AllChecksOutSeedData.cs`
+  - Migrations: `services/cases-api/Data/Migrations`
+  - SQL schema: `cases`
+- Service-local namespaces:
+  - `AllChecksOut.Cases.Api.Entities`
+  - `AllChecksOut.Cases.Api.Data`
+
+Future services should follow the same ownership rule: service-owned entities, service-owned DbContext, service-owned migrations, and no direct table access across service schemas.
 
 ## Domain Model
 
@@ -258,8 +289,7 @@ Do not directly share C# domain models with TypeScript. The frontend/backend bou
 
 ## Azure Infrastructure
 
-- Current template: `infra/main.bicep`
-- Target template path after Stage 1.5: `infra/bicep/main.bicep`
+- Current template: `infra/bicep/main.bicep`
 - Provisioned resource:
   - Azure Storage account
 - Storage settings:
@@ -278,14 +308,14 @@ Do not directly share C# domain models with TypeScript. The frontend/backend bou
 
 - Repository scripts run from the project root.
 - Main scripts:
-  - `pnpm run ui:dev`
-  - `pnpm run ui:build`
-  - `pnpm run ui:preview`
+  - `pnpm run shell:dev`
+  - `pnpm run shell:build`
+  - `pnpm run shell:preview`
   - `pnpm run type-check`
   - `pnpm run infra:what-if`
   - `pnpm run infra:deploy`
-  - `pnpm run ui:upload`
-  - `pnpm run ui:url`
+  - `pnpm run shell:upload`
+  - `pnpm run shell:url`
   - `pnpm run deploy-website`
   - `pnpm run deploy-everything`
   - `pnpm run infra:destroy`
@@ -295,7 +325,7 @@ Do not directly share C# domain models with TypeScript. The frontend/backend bou
   - `AZURE_DEPLOYMENT_NAME`
   - `AZURE_APP_NAME`
   - `AZURE_STORAGE_AUTH_MODE`
-  - `UI_DIST_DIR`
+  - `SHELL_DIST_DIR`
 
 ## Current Limitations
 

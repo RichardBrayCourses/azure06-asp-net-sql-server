@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace AllChecksOut.Infrastructure;
+namespace AllChecksOut.Cases.Api.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AllChecksOutDbContext>
 {

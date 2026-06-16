@@ -51,10 +51,10 @@ Read this before running commands.
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------- |
 | `pnpm install`                    | Installs dependencies into `node_modules`.                                                                   | No change.                                                                                                             | No change.                                                           | No change.                                |
 | `pnpm run type-check`             | Runs TypeScript checks.                                                                                      | No change.                                                                                                             | No change.                                                           | No change.                                |
-| `pnpm run ui:build`               | Builds `apps/ui/dist`. Needs Vite Entra values in `apps/ui/.env`.                                            | No change.                                                                                                             | No change.                                                           | No change.                                |
+| `pnpm run shell:build`               | Builds `apps/shell/dist`. Needs Vite Entra values in `apps/shell/.env`.                                            | No change.                                                                                                             | No change.                                                           | No change.                                |
 | `pnpm run repo:init`              | Creates a local Git repo if needed, then creates any missing course branches. Existing branches are skipped. | No change.                                                                                                             | If `origin` exists, pushes all four branches idempotently.           | No change.                                |
 | `pnpm run repo:init <github-url>` | Creates a local Git repo if needed, creates missing branches, and configures `origin`.                       | No change.                                                                                                             | Adds or verifies `origin` and pushes all four branches idempotently. | No change.                                |
-| `pnpm run deploy:testing`         | Generates `apps/ui/.env`, builds the UI, and uploads `apps/ui/dist`.                                         | Creates or updates testing infrastructure, Entra app registration, App Configuration values, and static website files. | No change.                                                           | No change.                                |
+| `pnpm run deploy:testing`         | Generates `apps/shell/.env`, builds the UI, and uploads `apps/shell/dist`.                                         | Creates or updates testing infrastructure, Entra app registration, App Configuration values, and static website files. | No change.                                                           | No change.                                |
 | `pnpm run release:testing`        | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `testing`, triggering GitHub Actions.                         | No change.                                |
 | `pnpm run release:staging`        | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `staging`, triggering GitHub Actions.                         | No change.                                |
 | `pnpm run release:production`     | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `production`, triggering GitHub Actions.                      | No change.                                |
@@ -81,14 +81,14 @@ changes Azure testing only. It does not change staging, production, GitHub, or C
 | ----------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Install dependencies on your machine            | Once per machine, then again when dependencies change                                 | `pnpm install`                                                                                                      |
 | Initialise, repair, or publish course branches  | Once per copied repo, or whenever one of the four local or remote branches is missing | `pnpm run repo:init`                                                                                                |
-| Configure GitHub Actions access to Azure        | Once per GitHub repo, then again only if you need to replace the credential           | `REPO_PREFIX_CODE=azure05 APP_PREFIX="all-checks-out-$REPO_PREFIX_CODE-github-actions" pnpm run setup:github-azure` |
+| Configure GitHub Actions access to Azure        | Once per GitHub repo, then again only if you need to replace the credential           | `REPO_PREFIX_CODE=azure06 APP_PREFIX="all-checks-out-$REPO_PREFIX_CODE-github-actions" pnpm run setup:github-azure` |
 | Deploy testing for the first time               | Once initially, then as needed                                                        | `pnpm run release:testing` or `pnpm run deploy:testing`                                                             |
 | Configure testing registered domain             | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Promote tested work into staging                | Many times                                                                            | `pnpm run release:staging`                                                                                          |
 | Configure staging registered domain             | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Promote approved work into production           | Many times, carefully                                                                 | `pnpm run release:production`                                                                                       |
 | Configure production registered domain          | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
-| Generate local frontend Entra config from Azure | Whenever you want to run the UI locally against an Azure environment                  | `DEPLOY_ENV=testing pnpm run ui:env`                                                                                |
+| Generate local frontend Entra config from Azure | Whenever you want to run the UI locally against an Azure environment                  | `DEPLOY_ENV=testing pnpm run shell:env`                                                                                |
 | Preview Azure infrastructure changes            | Whenever useful                                                                       | `pnpm run whatif:testing`                                                                                           |
 | Remove an Azure environment                     | Rarely                                                                                | `pnpm run destroy:testing`                                                                                          |
 
@@ -101,7 +101,7 @@ Then choose either Step 4a or Step 4b.
 Run terminal commands from the repository root:
 
 ```bash
-cd /Users/richardbray/src/azure05-entra-authentication
+cd /Users/richardbray/src/azure06-asp-net-sql-server
 ```
 
 ## Initial Setup
@@ -168,7 +168,7 @@ Check TypeScript:
 pnpm run type-check
 ```
 
-Do not worry if `pnpm run ui:build` cannot build yet on a completely fresh machine. This lesson's UI needs Entra configuration values before Vite can build it. Those values are generated after the first infrastructure deployment.
+Do not worry if `pnpm run shell:build` cannot build yet on a completely fresh machine. This lesson's UI needs Entra configuration values before Vite can build it. Those values are generated after the first infrastructure deployment.
 
 ## Choose A Deployment Option
 
@@ -177,7 +177,7 @@ After initial setup, choose one of these paths:
 - Step 4a: local deployment from your machine.
 - Step 4b: GitHub Actions CI/CD deployment.
 
-Local deployment is the shortest path when you want to prove Azure05 works from your terminal.
+Local deployment is the shortest path when you want to prove Azure06 works from your terminal.
 
 GitHub Actions deployment is the course release path when you want branch promotion and remote CI/CD.
 
@@ -187,32 +187,32 @@ Use this option when you want your terminal to deploy Azure directly.
 
 Local deployment uses your current working tree. It does not create or repair course branches, push to GitHub, or trigger GitHub Actions.
 
-During local deployment, `apps/ui/.env` and `apps/ui/.env.generated.<environment>` are generated on your machine before the local Vite build runs.
+During local deployment, `apps/shell/.env` and `apps/shell/.env.generated.<environment>` are generated on your machine before the local Vite build runs.
 
 ### 4a.1 Deploy Testing
 
-Run this from the Azure05 repository root:
+Run this from the Azure06 repository root:
 
 ```bash
-cd /Users/richardbray/src/azure05-entra-authentication
+cd /Users/richardbray/src/azure06-asp-net-sql-server
 pnpm run deploy:testing
 ```
 
-The correct Azure05 output includes:
+The correct Azure06 output includes:
 
 ```text
-Ensuring Microsoft Entra app registration: All Checks Out Azure05 testing
+Ensuring Microsoft Entra app registration: All Checks Out Azure06 testing
 ```
 
 It also runs this website deployment chain:
 
 ```text
-ui:env
-  -> ui:build
-  -> ui:upload
+shell:env
+  -> shell:build
+  -> shell:upload
 ```
 
-If the output jumps straight from `infra:deploy` to `ui:build`, you are probably in an earlier repo such as Azure04.
+If the output jumps straight from `infra:deploy` to `shell:build`, you are probably in an earlier repo such as Azure04.
 
 ### 4a.2 Test Testing
 
@@ -238,7 +238,7 @@ Run:
 pnpm run deploy:staging
 ```
 
-During this local deployment, `apps/ui/.env` and `apps/ui/.env.generated.staging` are generated on your machine before the local Vite build runs.
+During this local deployment, `apps/shell/.env` and `apps/shell/.env.generated.staging` are generated on your machine before the local Vite build runs.
 
 ### 4a.4 Test Staging
 
@@ -264,7 +264,7 @@ Run:
 pnpm run deploy:production
 ```
 
-During this local deployment, `apps/ui/.env` and `apps/ui/.env.generated.production` are generated on your machine before the local Vite build runs.
+During this local deployment, `apps/shell/.env` and `apps/shell/.env.generated.production` are generated on your machine before the local Vite build runs.
 
 ### 4a.6 Test Production
 
@@ -288,7 +288,7 @@ Production is configured to use `www.all-checks-out.com`. The root domain `all-c
 
 Use this option when you want branch promotion and remote CI/CD.
 
-GitHub Actions deployment creates `apps/ui/.env` and `apps/ui/.env.generated.<environment>` on the temporary GitHub Actions runner. Those files are used by the remote Vite build, are not committed to Git, are not copied back to your machine, and disappear when the workflow runner is cleaned up.
+GitHub Actions deployment creates `apps/shell/.env` and `apps/shell/.env.generated.<environment>` on the temporary GitHub Actions runner. Those files are used by the remote Vite build, are not committed to Git, are not copied back to your machine, and disappear when the workflow runner is cleaned up.
 
 This is one larger setup-and-release step because GitHub Actions needs branches, a GitHub remote, a GitHub secret, and committed code before it can deploy.
 
@@ -347,7 +347,7 @@ GitHub Actions needs permission to deploy into Azure.
 Use this repo prefix code:
 
 ```bash
-REPO_PREFIX_CODE=azure05
+REPO_PREFIX_CODE=azure06
 ```
 
 Run:
@@ -362,7 +362,7 @@ Examples:
 
 ```text
 azure04
-azure05
+azure06
 azure06
 ```
 
@@ -395,7 +395,7 @@ git add .
 Commit:
 
 ```bash
-git commit -m "Prepare Azure05 phased delivery"
+git commit -m "Prepare Azure06 phased delivery"
 ```
 
 Push `main`:
@@ -424,7 +424,7 @@ Wait for GitHub Actions:
 pnpm run testing:wait-for-deploy
 ```
 
-GitHub Actions deploys the testing environment. During that deployment it creates or updates the testing Entra app registration, writes the Vite Entra settings into Azure App Configuration, generates `apps/ui/.env`, builds the UI, and uploads the result.
+GitHub Actions deploys the testing environment. During that deployment it creates or updates the testing Entra app registration, writes the Vite Entra settings into Azure App Configuration, generates `apps/shell/.env`, builds the UI, and uploads the result.
 
 ### 4b.6 Test Testing
 
@@ -462,7 +462,7 @@ Wait for GitHub Actions:
 pnpm run staging:wait-for-deploy
 ```
 
-GitHub Actions deploys the staging environment. During that deployment, `apps/ui/.env` and `apps/ui/.env.generated.staging` are generated on the temporary GitHub Actions runner, used for the remote Vite build, and then discarded when the workflow runner is cleaned up.
+GitHub Actions deploys the staging environment. During that deployment, `apps/shell/.env` and `apps/shell/.env.generated.staging` are generated on the temporary GitHub Actions runner, used for the remote Vite build, and then discarded when the workflow runner is cleaned up.
 
 ### 4b.8 Test Staging
 
@@ -500,7 +500,7 @@ Wait for GitHub Actions:
 pnpm run production:wait-for-deploy
 ```
 
-GitHub Actions deploys the production environment. During that deployment, `apps/ui/.env` and `apps/ui/.env.generated.production` are generated on the temporary GitHub Actions runner, used for the remote Vite build, and then discarded when the workflow runner is cleaned up.
+GitHub Actions deploys the production environment. During that deployment, `apps/shell/.env` and `apps/shell/.env.generated.production` are generated on the temporary GitHub Actions runner, used for the remote Vite build, and then discarded when the workflow runner is cleaned up.
 
 ### 4b.10 Test Production
 
@@ -591,13 +591,13 @@ pnpm run whatif:production
 Generate local frontend Entra config from testing:
 
 ```bash
-DEPLOY_ENV=testing pnpm run ui:env
+DEPLOY_ENV=testing pnpm run shell:env
 ```
 
-Run the UI locally after generating `apps/ui/.env`:
+Run the UI locally after generating `apps/shell/.env`:
 
 ```bash
-pnpm run ui:dev
+pnpm run shell:dev
 ```
 
 The local Entra redirect URI is:
@@ -660,21 +660,21 @@ The deployment command expands into this chain:
 deploy:<environment>
   -> deploy-everything
   -> infra:deploy
-  -> ui:env
-  -> ui:build
-  -> ui:upload
-  -> ui:url
+  -> shell:env
+  -> shell:build
+  -> shell:upload
+  -> shell:url
 ```
 
 `infra:deploy` creates or updates the Azure infrastructure and the Entra app registration.
 
-`ui:env` reads Azure App Configuration and writes the Vite `.env` file.
+`shell:env` reads Azure App Configuration and writes the Vite `.env` file.
 
-`ui:build` builds the React app.
+`shell:build` builds the React app.
 
-`ui:upload` uploads the built files to the Azure Storage static website.
+`shell:upload` uploads the built files to the Azure Storage static website.
 
-`ui:url` prints the Azure static website URL and the intended public URL.
+`shell:url` prints the Azure static website URL and the intended public URL.
 
 ## Environment Configuration
 
@@ -753,21 +753,21 @@ So when `scripts/deploy-infra.sh` runs, `SCRIPT_DIR` becomes the absolute path t
 
 This pattern lets the script work even if you launch it from a different current directory.
 
-That is why `deploy-infra.sh`, `what-if-infra.sh`, `upload-ui.sh`, `show-url.sh`, `connect-custom-domain.sh`, `destroy-infra.sh`, and `generate-ui-env.sh` all agree on which environment they are working with.
+That is why `deploy-infra.sh`, `what-if-infra.sh`, `upload-shell.sh`, `show-url.sh`, `connect-custom-domain.sh`, `destroy-infra.sh`, and `generate-shell-env.sh` all agree on which environment they are working with.
 
 `scripts/config.sh` also sets the Entra defaults:
 
 ```bash
-ENTRA_APP_DISPLAY_NAME="${ENTRA_APP_DISPLAY_NAME:-All Checks Out Azure05 $ENVIRONMENT_NAME}"
+ENTRA_APP_DISPLAY_NAME="${ENTRA_APP_DISPLAY_NAME:-All Checks Out Azure06 $ENVIRONMENT_NAME}"
 ENTRA_API_SCOPE="${ENTRA_API_SCOPE:-}"
 ```
 
 That gives each environment a separate app registration name, such as:
 
 ```text
-All Checks Out Azure05 testing
-All Checks Out Azure05 staging
-All Checks Out Azure05 production
+All Checks Out Azure06 testing
+All Checks Out Azure06 staging
+All Checks Out Azure06 production
 ```
 
 `ENTRA_API_SCOPE` stays empty while this lesson only uses sign-in. Later API lessons can set it to request an access token for a backend API.
@@ -777,7 +777,7 @@ All Checks Out Azure05 production
 The Bicep file for this lesson is:
 
 ```text
-infra/main.bicep
+infra/bicep/main.bicep
 ```
 
 It creates:
@@ -873,7 +873,7 @@ Bicep receives the generated client ID and tenant ID, then writes frontend build
 
 ## Bicep Resources
 
-`infra/main.bicep` starts with ordinary deployment parameters:
+`infra/bicep/main.bicep` starts with ordinary deployment parameters:
 
 ```bicep
 param location string = resourceGroup().location
@@ -884,7 +884,7 @@ param domainName string
 
 `location`, `appName`, `environmentName`, and `domainName` come from the selected `environments/<environment>.json` file.
 
-The `azure02web` value is only the template fallback. Normal Azure05 deployments pass `allcheckouttest`, `allcheckoutstage`, or `allcheckoutprod` from the environment JSON files.
+The `azure02web` value is only the template fallback. Normal Azure06 deployments pass `allcheckouttest`, `allcheckoutstage`, or `allcheckoutprod` from the environment JSON files.
 
 The Entra parameters are passed in by `scripts/deploy-infra.sh`:
 
@@ -985,8 +985,8 @@ This section explains how each environment's Azure and Entra configuration becom
 In the normal release flow, the generated frontend environment files are created on the GitHub Actions runner:
 
 ```text
-apps/ui/.env
-apps/ui/.env.generated.<environment>
+apps/shell/.env
+apps/shell/.env.generated.<environment>
 ```
 
 They are used by `vite build` on that temporary GitHub Actions machine.
@@ -1000,7 +1000,7 @@ They disappear when the GitHub Actions job finishes.
 You only get these files on your own machine if you deliberately run a local command that generates them, such as:
 
 ```bash
-DEPLOY_ENV=testing pnpm run ui:env
+DEPLOY_ENV=testing pnpm run shell:env
 ```
 
 or a local deployment command, such as:
@@ -1020,8 +1020,8 @@ const apiScope = import.meta.env.VITE_ENTRA_API_SCOPE;
 Those values must exist before either of these commands runs:
 
 ```bash
-pnpm run ui:dev
-pnpm run ui:build
+pnpm run shell:dev
+pnpm run shell:build
 ```
 
 For deployed builds, this happens automatically. For example:
@@ -1034,12 +1034,12 @@ runs:
 
 ```text
 infra:deploy
-  -> ui:env
-  -> ui:build
-  -> ui:upload
+  -> shell:env
+  -> shell:build
+  -> shell:upload
 ```
 
-`pnpm run ui:env` runs `scripts/generate-ui-env.sh`.
+`pnpm run shell:env` runs `scripts/generate-shell-env.sh`.
 
 The script finds the App Configuration store from the Bicep output:
 
@@ -1062,20 +1062,20 @@ ENTRA_API_SCOPE=$(read_config_value "VITE_ENTRA_API_SCOPE")
 Finally, it writes:
 
 ```text
-apps/ui/.env
-apps/ui/.env.generated.<environment>
+apps/shell/.env
+apps/shell/.env.generated.<environment>
 ```
 
 For testing, that means:
 
 ```text
-apps/ui/.env
-apps/ui/.env.generated.testing
+apps/shell/.env
+apps/shell/.env.generated.testing
 ```
 
-`apps/ui/.env` is the active file. Vite automatically reads this file when `vite dev` or `vite build` runs.
+`apps/shell/.env` is the active file. Vite automatically reads this file when `vite dev` or `vite build` runs.
 
-`apps/ui/.env.generated.<environment>` is a labelled copy of the same values. Vite does not read or process this file name. It exists only for human readers, so you can see which values were generated for testing, staging, or production without relying on the active `.env` file name.
+`apps/shell/.env.generated.<environment>` is a labelled copy of the same values. Vite does not read or process this file name. It exists only for human readers, so you can see which values were generated for testing, staging, or production without relying on the active `.env` file name.
 
 The generated file looks like this:
 
@@ -1087,11 +1087,11 @@ VITE_ENTRA_API_SCOPE=
 
 The script deliberately does not write files named `.env.testing`, `.env.staging`, or `.env.production`. Those filenames have special meaning to Vite modes, and using them here would make it easier to accidentally load the wrong environment during a build.
 
-For local development, generate `apps/ui/.env` from an already-deployed Azure environment:
+For local development, generate `apps/shell/.env` from an already-deployed Azure environment:
 
 ```bash
-DEPLOY_ENV=testing pnpm run ui:env
-pnpm run ui:dev
+DEPLOY_ENV=testing pnpm run shell:env
+pnpm run shell:dev
 ```
 
 That local UI will use the testing Entra app registration and the localhost redirect URI:
@@ -1102,7 +1102,7 @@ http://localhost:5173/auth/callback
 
 ## App Configuration To Vite: The Whole Path
 
-This is the main Azure05 pattern:
+This is the main Azure06 pattern:
 
 ```text
 environment JSON
@@ -1111,8 +1111,8 @@ environment JSON
   -> Entra app registration
   -> Bicep parameters
   -> Azure App Configuration
-  -> scripts/generate-ui-env.sh
-  -> apps/ui/.env
+  -> scripts/generate-shell-env.sh
+  -> apps/shell/.env
   -> Vite build
   -> static files uploaded to Azure Storage
 ```
@@ -1130,7 +1130,7 @@ In AWS, the configuration service was SSM Parameter Store.
 
 In this Azure lesson, the configuration service is Azure App Configuration.
 
-The important detail is that Vite environment variables are build-time values. The browser does not read Azure App Configuration directly. The deployment reads App Configuration first, writes `apps/ui/.env`, and only then runs `vite build`.
+The important detail is that Vite environment variables are build-time values. The browser does not read Azure App Configuration directly. The deployment reads App Configuration first, writes `apps/shell/.env`, and only then runs `vite build`.
 
 That means each deployed static website contains the correct Entra values for the environment that built it:
 
@@ -1216,7 +1216,7 @@ The command performed these actions:
 4. Deployed the Bicep template.
 5. Wrote the Entra build values into Azure App Configuration.
 6. Enabled Azure Storage static website hosting.
-7. Generated `apps/ui/.env` from Azure App Configuration.
+7. Generated `apps/shell/.env` from Azure App Configuration.
 8. Built the UI on your machine.
 9. Uploaded the built UI files to Azure Storage.
 10. Printed the Azure static website URL and the intended public URL.

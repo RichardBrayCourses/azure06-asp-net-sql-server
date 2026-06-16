@@ -1,4 +1,4 @@
-namespace AllChecksOut.Domain;
+namespace AllChecksOut.Cases.Api.Entities;
 
 public abstract class Entity
 {

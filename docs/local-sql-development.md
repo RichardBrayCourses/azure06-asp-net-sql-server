@@ -1,6 +1,6 @@
 # Local SQL Development
 
-Azure06 Stage 1 adds a local SQL Server option for the ASP.NET Core API and EF Core migrations.
+Azure06 Stage 1 adds a local SQL Server option for the ASP.NET Core services and EF Core migrations.
 
 ## Start SQL Server
 
@@ -14,7 +14,7 @@ The default local connection string is:
 Server=localhost,1433;Database=AllChecksOut;User Id=sa;Password=AllChecksOut_2026!;TrustServerCertificate=True;Encrypt=False
 ```
 
-It is configured in `apps/api/AllChecksOut.Api/appsettings.Development.json` and can be overridden with:
+It is configured in `services/cases-api/appsettings.Development.json` and can be overridden with:
 
 ```bash
 ConnectionStrings__AllChecksOut="Server=...;Database=...;..."
@@ -30,8 +30,8 @@ Or use `dotnet` directly:
 
 ```bash
 dotnet ef database update \
-  --project src/AllChecksOut.Infrastructure \
-  --startup-project apps/api/AllChecksOut.Api
+  --project services/cases-api \
+  --startup-project services/cases-api
 ```
 
 ## Build And Test

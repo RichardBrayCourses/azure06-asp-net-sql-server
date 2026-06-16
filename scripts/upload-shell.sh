@@ -5,9 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
-if [ ! -d "$UI_DIST_DIR" ]; then
-  echo "Build output not found at $UI_DIST_DIR"
-  echo "Run: pnpm run ui:build"
+if [ ! -d "$SHELL_DIST_DIR" ]; then
+  echo "Build output not found at $SHELL_DIST_DIR"
+  echo "Run: pnpm run shell:build"
   exit 1
 fi
 
@@ -29,13 +29,13 @@ else
 fi
 
 echo ""
-echo "Uploading $UI_DIST_DIR to the $ENVIRONMENT_NAME static website container in $STORAGE_ACCOUNT_NAME"
+echo "Uploading $SHELL_DIST_DIR to the $ENVIRONMENT_NAME static website container in $STORAGE_ACCOUNT_NAME"
 echo ""
 
 az storage blob upload-batch \
   --account-name "$STORAGE_ACCOUNT_NAME" \
   --destination '$web' \
-  --source "$UI_DIST_DIR" \
+  --source "$SHELL_DIST_DIR" \
   --overwrite true \
   "${STORAGE_AUTH_ARGS[@]}" \
   --output table

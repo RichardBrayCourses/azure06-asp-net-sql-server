@@ -17,21 +17,23 @@ Future agents should read these documents before starting:
 
 The repository currently has:
 
-- React, TypeScript, Vite frontend in `apps/ui`.
-- In-memory domain state and domain commands in `apps/ui/src/data/console.ts`.
+- React, TypeScript, Vite frontend in `apps/shell`.
+- In-memory domain state and domain commands in `apps/shell/src/data/console.ts`.
 - Demo/domain sign-in context stored in local storage under `user`.
-- Entra sign-in through MSAL in `apps/ui/src/lib/entra/auth.ts`.
+- Entra sign-in through MSAL in `apps/shell/src/lib/entra/auth.ts`.
 - MSAL configured to use local storage for its own cache.
 - Azure infrastructure for static website hosting and App Configuration.
 - ASP.NET Core solution in `AllChecksOut.sln`.
-- API host in `apps/api/AllChecksOut.Api`.
-- Domain project in `src/AllChecksOut.Domain`.
-- Infrastructure project in `src/AllChecksOut.Infrastructure`.
-- EF Core SQL Server model, initial migration, and seed data.
+- Shell frontend in `apps/shell`.
+- Current backend service in `services/cases-api`.
+- EF Core SQL Server model, initial migration, and seed data inside `services/cases-api`.
+- Service-owned SQL schema: `cases`.
+- Database ownership placeholder in `database/`.
+- Bicep template in `infra/bicep/main.bicep`.
 - Local SQL Server support in `docker-compose.sql.yml`.
 - No frontend API client layer.
 
-The current layout is a working Stage 1 scaffold, but should be restructured before more backend and frontend/API integration code is added. Stage 1.5 is now the next required step.
+Stage 1.5 repository restructure is complete and now follows `docs/repository-architecture.md`. Stage 2 authentication, API protection, and current-user resolution are the next required steps.
 
 ## Core Decisions
 
@@ -61,13 +63,11 @@ Create the .NET backend foundation and SQL persistence layer without yet replaci
 
 ### Scope
 
-Add a solution and backend projects:
+Add a solution and backend foundation. After Stage 1.5, the active backend home is service-local:
 
 - `AllChecksOut.sln`
-- `apps/api/AllChecksOut.Api`
-- `src/AllChecksOut.Domain`
-- `src/AllChecksOut.Infrastructure`
-- `tests/AllChecksOut.Api.Tests` or `tests/AllChecksOut.Infrastructure.Tests`
+- `services/cases-api`
+- `tests/cases-api.Tests`
 
 Use current ASP.NET Core minimal API conventions unless there is a strong reason to introduce MVC controllers.
 
@@ -103,7 +103,7 @@ Use a DbContext, for example `AllChecksOutDbContext`.
 
 Add EF Core migrations.
 
-Add seed data equivalent to the current seeded data in `apps/ui/src/data/console.ts`.
+Add seed data equivalent to the current seeded data in `apps/shell/src/data/console.ts`.
 
 Add local SQL development support. Prefer a Docker Compose SQL Server option or clear documented connection string setup.
 
@@ -136,13 +136,15 @@ Create `docs/handovers/azure06-stage-1-handover.md` with:
 - Tests run and results.
 - Known gaps for Stage 2.
 
-## Stage 1.5 - Repository Restructure And Boundary Clarification
+## Stage 1.5 - Repository Restructure And Deployment Boundary Clarification
 
 ### Goal
 
-Restructure the repository before Stage 2 so frontend, backend, database, infrastructure, and future shared packages have clear homes.
+Restructure the repository before Stage 2 so independently deployable frontend apps, independently deployable backend services, database ownership, infrastructure, and future shared frontend packages have clear homes.
 
 This is intentionally scheduled immediately after Stage 1 because the cost of moving projects, scripts, paths, and docs increases sharply once authentication endpoints, API contracts, generated clients, tests, and deployment workflows are added.
+
+The repository should not be structured as one large Clean Architecture application. Apply Clean Architecture inside an individual service only when a service needs it.
 
 ### Target Layout
 
@@ -150,23 +152,24 @@ Use this as the target direction:
 
 ```text
 apps/
-  web/                         # React/Vite frontend, currently apps/ui
-  api/                         # ASP.NET Core API host
+  shell/                       # current React/Vite shell
+  cases-web/                   # future deployable React app
+  people-web/                  # future deployable React app
+  admin-web/                   # future deployable React app
 
-src/
-  AllChecksOut.Domain/          # .NET entities and domain concepts
-  AllChecksOut.Application/     # .NET use cases, app services, DTOs, auth/user resolution
-  AllChecksOut.Infrastructure/  # EF Core, Azure SQL, external services
+services/
+  cases-api/                   # current ASP.NET Core service
+  people-api/                  # future service
+  identity-api/                # future service
+  notifications-api/           # future service
 
 tests/
-  AllChecksOut.Application.Tests/
-  AllChecksOut.Infrastructure.Tests/
-  AllChecksOut.Api.Tests/
+  cases-api.Tests/
 
 packages/
-  client/                       # generated TypeScript API client, later
-  ui/                           # shared React components, only when useful
-  config/                       # shared frontend config, only when useful
+  ui/                          # shared frontend UI only when useful
+  config/                      # shared frontend config only when useful
+  contracts/                   # generated or explicit frontend API contracts later
 
 database/
   README.md
@@ -184,47 +187,31 @@ infra/
 
 ### Scope
 
-- Rename `apps/ui` to `apps/web`.
-- Update every script, config file, workflow, document, and import path that refers to `apps/ui`.
-- Decide and apply the API host path:
-  - preferred monorepo ergonomics: `apps/api`
-  - acceptable .NET-friendly alternative: keep `apps/api/AllChecksOut.Api`
-- Add `src/AllChecksOut.Application` as a .NET class library.
-- Add the Application project to `AllChecksOut.sln`.
-- Set project references so:
-  - `AllChecksOut.Application` references `AllChecksOut.Domain`.
-  - `AllChecksOut.Infrastructure` references `AllChecksOut.Application` and `AllChecksOut.Domain`.
-  - `AllChecksOut.Api` references `AllChecksOut.Application`, `AllChecksOut.Infrastructure`, and `AllChecksOut.Domain` only where needed.
+- Frontend app now lives in `apps/shell`.
+- Scripts, config files, workflows, documents, and import paths use the renamed frontend app path.
+- Backend service now lives in `services/cases-api`.
+- `cases-api` owns its entities, DbContext, seed data, and migrations inside the service folder.
+- `cases-api` owns the `cases` SQL schema.
+- Remove repository-level backend projects for Domain, Application, and Infrastructure.
 - Move infrastructure Bicep files toward `infra/bicep/`, updating scripts that call them.
 - Add `database/README.md` and `database/seed/` as placeholders for database ownership and future seed fixtures.
-- Keep EF migrations in `src/AllChecksOut.Infrastructure/Migrations` for now unless there is a strong reason to move them. EF tooling is simpler when migrations live beside the DbContext.
-- Leave `packages/` mostly empty unless there is an immediate concrete use. Do not create ornamental packages.
+- Add `packages/ui`, `packages/config`, and `packages/contracts` placeholders for future shared frontend code only.
 - Update handover and planning docs to reflect the new layout.
 
 ### Dependency Rules
 
-Preserve this dependency direction:
-
-```text
-apps/api
-  -> AllChecksOut.Application
-  -> AllChecksOut.Domain
-
-AllChecksOut.Infrastructure
-  -> AllChecksOut.Application
-  -> AllChecksOut.Domain
-```
-
-`AllChecksOut.Domain` must not depend on EF Core, ASP.NET Core, Azure SDKs, React, TypeScript, or SQL provider packages.
-
-Use generated API clients or explicit API DTO contracts for frontend/backend sharing. Do not try to directly share C# domain models with TypeScript.
+- Services must not share backend business logic through repository-level Domain/Application projects.
+- Each service owns its own EF Core DbContext and migrations.
+- Each service owns its own SQL schema.
+- Services must communicate through APIs or events, not direct table access.
+- Use generated API clients or explicit API DTO contracts for frontend/backend sharing. Do not directly share C# domain models with TypeScript.
 
 ### Acceptance Criteria
 
-- `pnpm run ui:build` still works, or the script is intentionally renamed and documented, for example `pnpm run web:build`.
+- `pnpm run shell:build` works.
 - Backend build succeeds with the new paths.
 - Backend tests pass.
-- EF migration commands still work with the new API/project paths.
+- EF migration commands work with `services/cases-api`.
 - Static website deployment scripts use the renamed frontend app path.
 - Bicep scripts use the new `infra/bicep` path if files are moved.
 - Documentation no longer refers to stale paths except in historical handover notes.
@@ -330,7 +317,7 @@ Move the behavior currently inside `InMemoryAllChecksOutDatabase` into backend s
 
 ### Scope
 
-Use `apps/ui/src/data/console.ts` as the behavioral source of truth.
+Use `apps/shell/src/data/console.ts` as the behavioral source of truth.
 
 Port query behavior for:
 
@@ -455,11 +442,11 @@ Refactor `DomainDataContext` and page code away from direct `db.*` calls.
 
 The current UI has many direct calls to `db` in:
 
-- `apps/ui/src/context/DomainDataContext.tsx`
-- `apps/ui/src/pages/ConsolePages.tsx`
-- `apps/ui/src/pages/EntraCallbackPage.tsx`
-- `apps/ui/src/pages/SetEmailAddressesPage.tsx`
-- `apps/ui/src/pages/SignInPage.tsx`
+- `apps/shell/src/context/DomainDataContext.tsx`
+- `apps/shell/src/pages/ConsolePages.tsx`
+- `apps/shell/src/pages/EntraCallbackPage.tsx`
+- `apps/shell/src/pages/SetEmailAddressesPage.tsx`
+- `apps/shell/src/pages/SignInPage.tsx`
 
 Choose a pragmatic migration approach:
 
@@ -536,7 +523,7 @@ After all stages:
 ```bash
 pnpm install
 pnpm run type-check
-pnpm run ui:build
+pnpm run shell:build
 dotnet build
 dotnet test
 ```

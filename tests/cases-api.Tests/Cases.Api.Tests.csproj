@@ -20,8 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AllChecksOut.Infrastructure\AllChecksOut.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\AllChecksOut.Domain\AllChecksOut.Domain.csproj" />
+    <ProjectReference Include="..\..\services\cases-api\Cases.Api.csproj" />
   </ItemGroup>
 
 </Project>

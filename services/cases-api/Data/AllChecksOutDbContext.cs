@@ -1,8 +1,8 @@
-using AllChecksOut.Domain;
+using AllChecksOut.Cases.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace AllChecksOut.Infrastructure;
+namespace AllChecksOut.Cases.Api.Data;
 
 public class AllChecksOutDbContext(DbContextOptions<AllChecksOutDbContext> options) : DbContext(options)
 {
@@ -25,13 +25,15 @@ public class AllChecksOutDbContext(DbContextOptions<AllChecksOutDbContext> optio
     public DbSet<TemplateTask> TemplateTasks => Set<TemplateTask>();
     public DbSet<CaseTemplateParticipant> CaseTemplateParticipants => Set<CaseTemplateParticipant>();
     public DbSet<Case> Cases => Set<Case>();
-    public DbSet<AllChecksOut.Domain.Task> Tasks => Set<AllChecksOut.Domain.Task>();
+    public DbSet<AllChecksOut.Cases.Api.Entities.Task> Tasks => Set<AllChecksOut.Cases.Api.Entities.Task>();
     public DbSet<StakeholderReview> StakeholderReviews => Set<StakeholderReview>();
     public DbSet<RequestForInformation> RequestsForInformation => Set<RequestForInformation>();
     public DbSet<ParticipantSupplier> ParticipantSuppliers => Set<ParticipantSupplier>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("cases");
+
         ConfigureEntity(modelBuilder.Entity<SystemOwner>());
         ConfigureEntity(modelBuilder.Entity<Authority>());
         ConfigureEntity(modelBuilder.Entity<AuthorityTerminology>());
@@ -51,7 +53,7 @@ public class AllChecksOutDbContext(DbContextOptions<AllChecksOutDbContext> optio
         ConfigureEntity(modelBuilder.Entity<TemplateTask>());
         ConfigureEntity(modelBuilder.Entity<CaseTemplateParticipant>());
         ConfigureEntity(modelBuilder.Entity<Case>());
-        ConfigureEntity(modelBuilder.Entity<AllChecksOut.Domain.Task>());
+        ConfigureEntity(modelBuilder.Entity<AllChecksOut.Cases.Api.Entities.Task>());
         ConfigureEntity(modelBuilder.Entity<StakeholderReview>());
         ConfigureEntity(modelBuilder.Entity<RequestForInformation>());
         ConfigureEntity(modelBuilder.Entity<ParticipantSupplier>());
@@ -75,7 +77,7 @@ public class AllChecksOutDbContext(DbContextOptions<AllChecksOutDbContext> optio
         modelBuilder.Entity<TemplateTask>().ToTable("TemplateTasks");
         modelBuilder.Entity<CaseTemplateParticipant>().ToTable("CaseTemplateParticipants");
         modelBuilder.Entity<Case>().ToTable("Cases");
-        modelBuilder.Entity<AllChecksOut.Domain.Task>().ToTable("Tasks");
+        modelBuilder.Entity<AllChecksOut.Cases.Api.Entities.Task>().ToTable("Tasks");
         modelBuilder.Entity<StakeholderReview>().ToTable("StakeholderReviews");
         modelBuilder.Entity<RequestForInformation>().ToTable("RequestsForInformation");
         modelBuilder.Entity<ParticipantSupplier>().ToTable("ParticipantSuppliers");
@@ -115,8 +117,8 @@ public class AllChecksOutDbContext(DbContextOptions<AllChecksOutDbContext> optio
             modelBuilder.Entity<AuthorityTerminology>().Property(entity => entity.LabelsJson).HasColumnType("nvarchar(max)");
             modelBuilder.Entity<TaskType>().Property(entity => entity.ParameterSchemaJson).HasColumnType("nvarchar(max)");
             modelBuilder.Entity<TemplateTask>().Property(entity => entity.ParametersJson).HasColumnType("nvarchar(max)");
-            modelBuilder.Entity<AllChecksOut.Domain.Task>().Property(entity => entity.ResponseJson).HasColumnType("nvarchar(max)");
-            modelBuilder.Entity<AllChecksOut.Domain.Task>().Property(entity => entity.EvidenceJson).HasColumnType("nvarchar(max)");
+            modelBuilder.Entity<AllChecksOut.Cases.Api.Entities.Task>().Property(entity => entity.ResponseJson).HasColumnType("nvarchar(max)");
+            modelBuilder.Entity<AllChecksOut.Cases.Api.Entities.Task>().Property(entity => entity.EvidenceJson).HasColumnType("nvarchar(max)");
             modelBuilder.Entity<RequestForInformation>().Property(entity => entity.StatusHistoryJson).HasColumnType("nvarchar(max)");
         }
 

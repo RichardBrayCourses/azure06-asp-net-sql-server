@@ -24,7 +24,7 @@ The relevant AWS pattern is:
 
 Azure06 already contains Microsoft Entra sign-in code in:
 
-`apps/ui/src/lib/entra/auth.ts`
+`apps/shell/src/lib/entra/auth.ts`
 
 The app uses MSAL:
 

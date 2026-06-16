@@ -1,5 +1,5 @@
 {
-  "name": "@apps/ui",
+  "name": "@apps/shell",
   "type": "module",
   "scripts": {
     "dev": "vite",

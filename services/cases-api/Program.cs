@@ -1,4 +1,4 @@
-using AllChecksOut.Infrastructure;
+using AllChecksOut.Cases.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
