@@ -12,19 +12,24 @@ It is based on:
 
 ## Current Phase
 
-- Course module: `azure02`
-- Module title: Azure Blob Static Website Hosting
+- Course module: `azure06`
+- Module title: Azure SQL, ASP.NET Core API, and Entity Framework Core
 - Repository purpose:
   - Build a React and TypeScript frontend.
+  - Add an ASP.NET Core API foundation.
+  - Add an Entity Framework Core SQL Server persistence layer.
+  - Prepare the frontend to move from in-memory state to protected API calls.
   - Provision Azure Blob static website hosting with Bicep.
   - Upload the production Vite bundle to the `$web` container.
   - Verify a live Azure-hosted single-page application.
 - Current implementation boundary:
-  - Frontend-only application.
+  - Stage 1 backend foundation exists.
+  - Frontend still uses in-memory domain data.
   - In-memory domain data.
-  - Demo sign-in rather than Microsoft Entra External ID.
-  - No backend API yet.
-  - No Azure SQL database yet.
+  - Entra frontend sign-in exists, but API token-bearing calls are not wired yet.
+  - ASP.NET Core API shell exists.
+  - EF Core model, migration, and seed data exist.
+  - Local SQL Server Docker Compose support exists.
   - No real file storage workflow yet.
 
 ## Target Azure Stack
@@ -50,6 +55,7 @@ It is based on:
 ```text
 .
 +-- package.json
++-- AllChecksOut.sln
 +-- README.md
 +-- docs
 +-- apps
@@ -59,9 +65,17 @@ It is based on:
 |       +-- package.json
 |       +-- vite.config.ts
 |       +-- tsconfig.json
+|   +-- api
+|       +-- AllChecksOut.Api
++-- src
+|   +-- AllChecksOut.Domain
+|   +-- AllChecksOut.Infrastructure
++-- tests
+|   +-- AllChecksOut.Infrastructure.Tests
 +-- environments
 +-- infra
 |   +-- main.bicep
++-- docker-compose.sql.yml
 +-- scripts
 |   +-- config.sh
 |   +-- deploy-infra.sh
@@ -72,9 +86,49 @@ It is based on:
 +-- pnpm-workspace.yaml
 ```
 
+## Target Repository Structure
+
+Before Stage 2 authentication work continues, run the Stage 1.5 repository restructure described in `docs/azure06-staged-implementation-plan.md`.
+
+Target direction:
+
+```text
+apps/
+  web/                         # React/Vite frontend
+  api/                         # ASP.NET Core API host
+
+src/
+  AllChecksOut.Domain/          # .NET entities and domain concepts
+  AllChecksOut.Application/     # use cases, app services, DTOs, user resolution
+  AllChecksOut.Infrastructure/  # EF Core, Azure SQL, external services
+
+tests/
+  AllChecksOut.Application.Tests/
+  AllChecksOut.Infrastructure.Tests/
+  AllChecksOut.Api.Tests/
+
+packages/
+  client/                       # generated TypeScript API client, later
+  ui/                           # shared React components, only when useful
+  config/                       # shared frontend config, only when useful
+
+database/
+  README.md
+  seed/
+
+infra/
+  bicep/
+    main.bicep
+    modules/
+    parameters/
+```
+
+Do not directly share C# domain models with TypeScript. The frontend/backend boundary should be the HTTP API and, later, a generated TypeScript client.
+
 ## Frontend Implementation
 
-- App location: `apps/ui`
+- Current app location: `apps/ui`
+- Target app location after Stage 1.5: `apps/web`
 - Framework:
   - React 19
   - TypeScript 5.9
@@ -204,7 +258,8 @@ It is based on:
 
 ## Azure Infrastructure
 
-- Template: `infra/main.bicep`
+- Current template: `infra/main.bicep`
+- Target template path after Stage 1.5: `infra/bicep/main.bicep`
 - Provisioned resource:
   - Azure Storage account
 - Storage settings:

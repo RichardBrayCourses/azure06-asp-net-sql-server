@@ -161,9 +161,11 @@ All future functionality should assume authenticated users.
 
 ## Tasks
 
+- [ ] Perform Stage 1.5 repository restructure before further API/auth work
 - [ ] Create Azure SQL database
 - [ ] Create ASP.NET Core data access layer
 - [ ] Introduce Entity Framework Core
+- [ ] Add .NET Application layer for use cases and user/application authorization services
 - [ ] Create migrations project
 - [ ] Create database deployment process
 - [ ] Replace existing persistence mechanism
@@ -175,6 +177,25 @@ All future functionality should assume authenticated users.
 ## Notes
 
 Use current ASP.NET Core best practices rather than older controller architectures.
+
+The Azure06 repository should use clear frontend/backend separation before Stage 2 authentication work continues. The preferred near-term layout is:
+
+```text
+apps/
+  web/
+  api/
+src/
+  AllChecksOut.Domain/
+  AllChecksOut.Application/
+  AllChecksOut.Infrastructure/
+tests/
+packages/
+database/
+infra/
+  bicep/
+```
+
+Avoid direct sharing of backend domain models with the TypeScript frontend. The frontend/backend contract should come through the API surface and, later, a generated TypeScript client package.
 
 ---
 

@@ -11,6 +11,7 @@ Future agents should read these documents before starting:
 - `docs/functional-specification.md`
 - `docs/database-entities.md`
 - `docs/azure06-authentication-decisions.md`
+- latest handover note in `docs/handovers/`
 
 ## Current Repository State
 
@@ -22,11 +23,15 @@ The repository currently has:
 - Entra sign-in through MSAL in `apps/ui/src/lib/entra/auth.ts`.
 - MSAL configured to use local storage for its own cache.
 - Azure infrastructure for static website hosting and App Configuration.
-- No ASP.NET Core solution.
-- No API project.
-- No EF Core model or migrations.
-- No Azure SQL database infrastructure.
+- ASP.NET Core solution in `AllChecksOut.sln`.
+- API host in `apps/api/AllChecksOut.Api`.
+- Domain project in `src/AllChecksOut.Domain`.
+- Infrastructure project in `src/AllChecksOut.Infrastructure`.
+- EF Core SQL Server model, initial migration, and seed data.
+- Local SQL Server support in `docker-compose.sql.yml`.
 - No frontend API client layer.
+
+The current layout is a working Stage 1 scaffold, but should be restructured before more backend and frontend/API integration code is added. Stage 1.5 is now the next required step.
 
 ## Core Decisions
 
@@ -128,6 +133,119 @@ Create `docs/handovers/azure06-stage-1-handover.md` with:
 - Migration names.
 - How to run local SQL and migrations.
 - Any entity mapping compromises.
+- Tests run and results.
+- Known gaps for Stage 2.
+
+## Stage 1.5 - Repository Restructure And Boundary Clarification
+
+### Goal
+
+Restructure the repository before Stage 2 so frontend, backend, database, infrastructure, and future shared packages have clear homes.
+
+This is intentionally scheduled immediately after Stage 1 because the cost of moving projects, scripts, paths, and docs increases sharply once authentication endpoints, API contracts, generated clients, tests, and deployment workflows are added.
+
+### Target Layout
+
+Use this as the target direction:
+
+```text
+apps/
+  web/                         # React/Vite frontend, currently apps/ui
+  api/                         # ASP.NET Core API host
+
+src/
+  AllChecksOut.Domain/          # .NET entities and domain concepts
+  AllChecksOut.Application/     # .NET use cases, app services, DTOs, auth/user resolution
+  AllChecksOut.Infrastructure/  # EF Core, Azure SQL, external services
+
+tests/
+  AllChecksOut.Application.Tests/
+  AllChecksOut.Infrastructure.Tests/
+  AllChecksOut.Api.Tests/
+
+packages/
+  client/                       # generated TypeScript API client, later
+  ui/                           # shared React components, only when useful
+  config/                       # shared frontend config, only when useful
+
+database/
+  README.md
+  seed/                         # optional external seed fixtures later
+
+infra/
+  bicep/
+    main.bicep
+    modules/
+    parameters/
+      testing.bicepparam
+      staging.bicepparam
+      production.bicepparam
+```
+
+### Scope
+
+- Rename `apps/ui` to `apps/web`.
+- Update every script, config file, workflow, document, and import path that refers to `apps/ui`.
+- Decide and apply the API host path:
+  - preferred monorepo ergonomics: `apps/api`
+  - acceptable .NET-friendly alternative: keep `apps/api/AllChecksOut.Api`
+- Add `src/AllChecksOut.Application` as a .NET class library.
+- Add the Application project to `AllChecksOut.sln`.
+- Set project references so:
+  - `AllChecksOut.Application` references `AllChecksOut.Domain`.
+  - `AllChecksOut.Infrastructure` references `AllChecksOut.Application` and `AllChecksOut.Domain`.
+  - `AllChecksOut.Api` references `AllChecksOut.Application`, `AllChecksOut.Infrastructure`, and `AllChecksOut.Domain` only where needed.
+- Move infrastructure Bicep files toward `infra/bicep/`, updating scripts that call them.
+- Add `database/README.md` and `database/seed/` as placeholders for database ownership and future seed fixtures.
+- Keep EF migrations in `src/AllChecksOut.Infrastructure/Migrations` for now unless there is a strong reason to move them. EF tooling is simpler when migrations live beside the DbContext.
+- Leave `packages/` mostly empty unless there is an immediate concrete use. Do not create ornamental packages.
+- Update handover and planning docs to reflect the new layout.
+
+### Dependency Rules
+
+Preserve this dependency direction:
+
+```text
+apps/api
+  -> AllChecksOut.Application
+  -> AllChecksOut.Domain
+
+AllChecksOut.Infrastructure
+  -> AllChecksOut.Application
+  -> AllChecksOut.Domain
+```
+
+`AllChecksOut.Domain` must not depend on EF Core, ASP.NET Core, Azure SDKs, React, TypeScript, or SQL provider packages.
+
+Use generated API clients or explicit API DTO contracts for frontend/backend sharing. Do not try to directly share C# domain models with TypeScript.
+
+### Acceptance Criteria
+
+- `pnpm run ui:build` still works, or the script is intentionally renamed and documented, for example `pnpm run web:build`.
+- Backend build succeeds with the new paths.
+- Backend tests pass.
+- EF migration commands still work with the new API/project paths.
+- Static website deployment scripts use the renamed frontend app path.
+- Bicep scripts use the new `infra/bicep` path if files are moved.
+- Documentation no longer refers to stale paths except in historical handover notes.
+
+### Keep Out Of Scope
+
+- Authentication implementation.
+- `/api/me` endpoint.
+- Domain command/query porting.
+- Generated frontend API client implementation unless required by path cleanup.
+- Azure SQL resource provisioning.
+
+### Handover Note To Write
+
+Create `docs/handovers/azure06-stage-1.5-handover.md` with:
+
+- Final repository tree.
+- Renames/moves performed.
+- Scripts changed.
+- Project references after restructure.
+- Any paths intentionally left unchanged and why.
 - Tests run and results.
 - Known gaps for Stage 2.
 
@@ -434,4 +552,3 @@ Also verify manually:
 - create an access grant
 - view stakeholder-scoped data
 - reject out-of-scope API access
-
