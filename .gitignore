@@ -1,0 +1,26 @@
+# Node
+node_modules/
+dist/
+infra/main.json
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# .NET
+bin/
+obj/
+
+# Logs
+*.log
+
+# Local environment files
+.env
+.env*
+my-secret*.json
+azure-credentials*.json
+
+# OS files
+.DS_Store
