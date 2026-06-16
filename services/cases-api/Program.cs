@@ -1,6 +1,7 @@
 using AllChecksOut.Cases.Api.Data;
 using AllChecksOut.Cases.Api.CurrentUser;
 using AllChecksOut.Cases.Api.Authentication;
+using AllChecksOut.Cases.Api.Domain;
 using AllChecksOut.Cases.Api.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,7 @@ builder.Services.AddDbContext<AllChecksOutDbContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ApplicationUserResolver>();
+builder.Services.AddScoped<CasesDomainService>();
 
 var entraJwtOptions = builder.Configuration
     .GetSection(EntraJwtOptions.SectionName)
