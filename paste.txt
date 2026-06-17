@@ -1,4 +1,4 @@
-pnpm run deploy:testing
+$ pnpm run deploy:testing
 $ bash scripts/deploy-infra.sh testing && bash scripts/update-database.sh testing && bash scripts/deploy-api.sh testing && bash scripts/generate-shell-env.sh testing && pnpm -C apps/shell run build && bash scripts/upload-shell.sh testing && bash scripts/show-url.sh testing
 
 Deploying infrastructure for environment: testing
@@ -15,7 +15,7 @@ Deploying Bicep template...
 
 Name                    State      Timestamp                         Mode         ResourceGroup
 ----------------------  ---------  --------------------------------  -----------  -------------------------
-all-checks-out-testing  Succeeded  2026-06-17T15:09:16.549278+00:00  Incremental  all-checks-out-testing-rg
+all-checks-out-testing  Succeeded  2026-06-17T15:12:41.334828+00:00  Incremental  all-checks-out-testing-rg
 
 Setting Azure SQL Microsoft Entra admin: arty.uptick_gmail.com#EXT#@artyuptickgmail.onmicrosoft.com
 
@@ -33,22 +33,32 @@ Entra API scope: api://ec0269b9-a4e0-4993-8e91-bada06509c06/access_as_user
 Azure SQL server: allcheckouttest-swedencentral-sql-qfuvgs7y6gilu.database.windows.net
 Azure SQL database: AllChecksOut
 
+Restore complete (0.1s)
+
+Build succeeded in 0.2s
 Allowing current client IP on Azure SQL firewall: 2.121.19.163
 
 Updating Azure SQL database.
 Environment: testing
 
-/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
-Unable to retrieve project metadata. Ensure it's an SDK-style project.
+Build started...
+Build succeeded.
+Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+No migrations were applied. The database is already up to date.
+Done.
 
-Database update attempt 1 failed. Waiting 20 seconds before retrying...
+Publishing Functions API for environment: testing
 
-/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
-Unable to retrieve project metadata. Ensure it's an SDK-style project.
+Restore complete (0.1s)
+  WorkerExtensions net8.0 succeeded (0.7s) → services/functions-api/obj/Release/net10.0/WorkerExtensions/bin/Release/net8.0/Microsoft.Azure.Functions.Worker.Extensions.dll
+  AllChecksOut.FunctionsApi net10.0 succeeded (1.1s) → /var/folders/d1/72hfylsn139033l1n4pbnrnc0000gn/T/all-checks-out-api-publish.0GLf48/
 
-Database update attempt 2 failed. Waiting 20 seconds before retrying...
+Build succeeded in 2.2s
 
-/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
-Unable to retrieve project metadata. Ensure it's an SDK-style project.
-[ELIFECYCLE] Command failed with exit code 1.
-$ 
+Deploying Functions API package to: allcheckouttest-testing-func-2lwwkfpxl2qiq
+
+/opt/homebrew/Cellar/azure-cli/2.87.0/libexec/lib/python3.13/site-packages/azure/mgmt/web/models/_models.py:19865: SyntaxWarning: invalid escape sequence '\S'
+  the time zones listed under HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows
+Getting scm site credentials for zip deployment
+Starting zip deployment. This operation can take a while to complete ...
+Deployment endpoint responded with status code 202 for deployment id "aa185dfd-adb6-4cb0-a92e-b6d6de9a540a"

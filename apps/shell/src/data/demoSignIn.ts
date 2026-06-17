@@ -25,9 +25,7 @@ export type DemoSignInOptionsDto = {
 };
 
 export async function loadDemoSignInOptions() {
-  return publicApiRequest<DemoSignInOptionsDto>("/api/demo/sign-in-options", {
-    headers: {
-      "X-Demo-SignIn-Key": apiConfig.demoSignInKey,
-    },
-  });
+  return publicApiRequest<DemoSignInOptionsDto>(
+    `/api/demo/sign-in-options?demoSignInKey=${encodeURIComponent(apiConfig.demoSignInKey)}`,
+  );
 }

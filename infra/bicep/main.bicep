@@ -214,6 +214,14 @@ resource functionsApi 'Microsoft.Web/sites@2024-04-01' = {
           value: demoSignInKey
         }
       ]
+      cors: {
+        allowedOrigins: [
+          frontendOrigin
+          'http://localhost:5173'
+          'http://127.0.0.1:5173'
+        ]
+        supportCredentials: false
+      }
       healthCheckPath: '/health'
     }
     functionAppConfig: {

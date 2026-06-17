@@ -234,8 +234,10 @@ public sealed class CasesHttpApi(
         CancellationToken cancellationToken)
     {
         var options = services.GetRequiredService<IOptions<DemoSignInOptions>>().Value;
+        var query = Query(request.Url);
+        var suppliedKey = Header(request, "X-Demo-SignIn-Key") ?? Value(query, "demoSignInKey");
         if (string.IsNullOrWhiteSpace(options.Key) ||
-            !string.Equals(Header(request, "X-Demo-SignIn-Key"), options.Key, StringComparison.Ordinal))
+            !string.Equals(suppliedKey, options.Key, StringComparison.Ordinal))
         {
             return Problem(request, HttpStatusCode.Unauthorized, "Demo sign-in is not available.");
         }
