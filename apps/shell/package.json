@@ -5,8 +5,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit",
-    "package-cleanup": "rm -rf node_modules dist"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.13.0",

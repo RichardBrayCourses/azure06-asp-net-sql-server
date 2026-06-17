@@ -427,108 +427,15 @@ pnpm run get-storage-account:production
 
 `Switch the Cloudflare record back to Proxied after Azure accepts the custom domain.`
 
-## Script Configuration
+## Environment Configuration
 
-All deployment scripts load `scripts/config.sh`. The package scripts pass the environment as an explicit script argument, and `config.sh` converts that environment into concrete Azure names.
-
-### Environment Selection
-
-The public package scripts pass the environment directly:
-
-```json
-"deploy:testing": "bash scripts/deploy-infra.sh testing",
-"deploy:staging": "bash scripts/deploy-infra.sh staging",
-"deploy:production": "bash scripts/deploy-infra.sh production"
-```
-
-`scripts/config.sh` reads the first argument:
-
-```bash
-SELECTED_ENVIRONMENT="${1:-}"
-```
-
-Only these environment names are accepted:
-
-```bash
-testing
-staging
-production
-```
-
-Each environment reads one JSON file:
+Every environment command is explicit: use the `:testing`, `:staging`, or `:production` package script. The scripts read the matching file in `environments/` for Azure names, regions, and hostnames.
 
 ```text
 environments/testing.json
 environments/staging.json
 environments/production.json
 ```
-
-Each JSON file contains:
-
-```json
-{
-  "environmentName": "testing",
-  "resourceGroup": "all-checks-out-testing-rg",
-  "location": "uksouth",
-  "sqlLocation": "swedencentral",
-  "appName": "allcheckouttest",
-  "deploymentName": "all-checks-out-testing",
-  "domainName": "testing.all-checks-out.com"
-}
-```
-
-### Values Produced By `config.sh`
-
-`ENVIRONMENT_NAME` is the logical environment name, such as `testing`.
-
-`AZURE_LOCATION` is the Azure region, defaulting to the JSON `location`.
-
-`AZURE_SQL_LOCATION` is the Azure SQL region, defaulting to JSON `sqlLocation` and then falling back to `AZURE_LOCATION`.
-
-`AZURE_RESOURCE_GROUP` is the resource group for this environment.
-
-`AZURE_DEPLOYMENT_NAME` is the Azure deployment record name. Scripts use this to read Bicep outputs later.
-
-`AZURE_APP_NAME` is the short name prefix used to build Azure resource names.
-
-`AZURE_DOMAIN_NAME` is the public domain name for the environment.
-
-`AZURE_STORAGE_AUTH_MODE` defaults to `key`.
-
-`ENTRA_APP_DISPLAY_NAME` defaults to `All Checks Out Azure06 <environment>`.
-
-`ENTRA_API_SCOPE` defaults to empty.
-
-`AZURE_SQL_ADMIN_LOGIN` defaults to `allchecksoutadmin`.
-
-`AZURE_SQL_DATABASE_NAME` defaults to `AllChecksOut`.
-
-`SHELL_DIST_DIR` defaults to `apps/shell/dist`.
-
-`BICEP_TEMPLATE_FILE` defaults to `infra/bicep/main.bicep`.
-
-### Deployment Command Chain
-
-`pnpm run deploy:testing` expands to:
-
-```text
-deploy:testing
-  -> scripts/deploy-infra.sh testing
-  -> scripts/generate-shell-env.sh testing
-  -> pnpm -C apps/shell run build
-  -> scripts/upload-shell.sh testing
-  -> scripts/show-url.sh testing
-```
-
-`scripts/deploy-infra.sh <environment>` deploys infrastructure.
-
-`scripts/generate-shell-env.sh <environment>` writes the shell environment files.
-
-`pnpm -C apps/shell run build` runs the Vite build.
-
-`scripts/upload-shell.sh <environment>` uploads the shell build.
-
-`scripts/show-url.sh <environment>` prints the environment URLs.
 
 ### SQL Authentication Flow
 
