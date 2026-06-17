@@ -1,66 +1,6 @@
 # Azure06 ASP.NET SQL Server
 
-## Completely Clean Out An Environment
-
-These commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Azure SQL server, Azure SQL database, and any data in that environment.
-
-Run from the repository root after `az login`:
-
-```bash
-cd /Users/richardbray/src/azure06-asp-net-sql-server
-az account show --output table
-```
-
-Delete testing completely:
-
-```bash
-pnpm run destroy:testing
-```
-
-Delete staging completely:
-
-```bash
-pnpm run destroy:staging
-```
-
-Delete production completely:
-
-```bash
-pnpm run destroy:production
-```
-
-Production deletion asks for confirmation. Type exactly:
-
-```text
-DELETE-PRODUCTION
-```
-
-Check whether an environment resource group still exists:
-
-```bash
-az group exists --name all-checks-out-testing-rg
-az group exists --name all-checks-out-staging-rg
-az group exists --name all-checks-out-production-rg
-```
-
-After a clean-out, redeploy from scratch with:
-
-```bash
-pnpm run migrations:reset
-pnpm run deploy:testing
-pnpm run testing:migrate:azure
-```
-
-For a completely fresh testing rebuild while the repo is still being actively shaped, use:
-
-```bash
-pnpm run destroy:testing
-pnpm run migrations:reset
-pnpm run deploy:testing
-pnpm run testing:migrate:azure
-```
-
-`destroy:testing` deletes Azure resources. `migrations:reset` changes repository files by deleting EF migration source files and leaving the repo with no migration history. `testing:migrate:azure` creates the first fresh `InitialSqlFoundation` migration from the current model if no migrations exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
+## The Simple Idea
 
 This repository deploys the All Checks Out React shell, ASP.NET Core cases API model, and Azure SQL database support into three Azure environments:
 
@@ -69,6 +9,25 @@ This repository deploys the All Checks Out React shell, ASP.NET Core cases API m
 | Testing | `testing` | `all-checks-out-testing-rg` | `https://testing.all-checks-out.com` |
 | Staging | `staging` | `all-checks-out-staging-rg` | `https://staging.all-checks-out.com` |
 | Production | `production` | `all-checks-out-production-rg` | `https://www.all-checks-out.com` |
+
+Development happens on `main`, but `main` does not deploy automatically.
+
+Code is promoted in one direction:
+
+```text
+main
+  |
+  v
+testing
+  |
+  v
+staging
+  |
+  v
+production
+```
+
+Each environment has its own Azure resource group, storage account, static website endpoint, App Configuration store, Entra app registration, Azure SQL server, Azure SQL database, generated frontend `.env` file, and Cloudflare DNS record.
 
 ## Deploy The System
 
@@ -83,6 +42,35 @@ Install dependencies:
 ```bash
 pnpm install
 ```
+
+Check the required tools:
+
+```bash
+node --version
+pnpm --version
+az version
+dotnet --version
+git --version
+```
+
+For GitHub Actions deployment, also check GitHub CLI:
+
+```bash
+gh --version
+gh auth status
+```
+
+For local EF Core commands, install the EF CLI if it is missing:
+
+```bash
+if command -v dotnet-ef >/dev/null 2>&1; then
+  dotnet-ef --version
+else
+  dotnet tool install --global dotnet-ef --version 10.0.9
+fi
+```
+
+This repository targets .NET 10.
 
 Sign in to Azure:
 
@@ -104,7 +92,6 @@ Use local deployment when you want your terminal to deploy directly to Azure.
 First-time testing deployment:
 
 ```bash
-pnpm run migrations:reset
 pnpm run deploy:testing
 pnpm run testing:migrate:azure
 ```
@@ -130,6 +117,12 @@ The SQL administrator password is generated only as a throwaway value required b
 ### GitHub Actions Deployment
 
 Use GitHub Actions when you want branch promotion and remote deployment.
+
+Sign in to GitHub before running the setup commands:
+
+```bash
+gh auth login
+```
 
 Set up GitHub branches and the Azure credential once:
 
@@ -179,10 +172,12 @@ pnpm run whatif:staging
 pnpm run whatif:production
 ```
 
-Print the Azure static website URL and CNAME target:
+Print the Azure static website URL and Cloudflare CNAME target:
 
 ```bash
-pnpm run shell:url
+DEPLOY_ENV=testing pnpm run shell:url
+DEPLOY_ENV=staging pnpm run shell:url
+DEPLOY_ENV=production pnpm run shell:url
 ```
 
 Delete an environment resource group:
@@ -197,6 +192,208 @@ Production deletion asks for this confirmation:
 
 ```text
 DELETE-PRODUCTION
+```
+
+Check whether an environment resource group still exists:
+
+```bash
+az group exists --name all-checks-out-testing-rg
+az group exists --name all-checks-out-staging-rg
+az group exists --name all-checks-out-production-rg
+```
+
+### Clean Rebuild An Environment
+
+Destroy commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Azure SQL server, Azure SQL database, and any data in that environment. They do not change GitHub or Cloudflare.
+
+After a clean rebuild, reconnect or verify the registered domain before testing sign-in.
+
+If no registered domain has been created for the environment yet, use the copied Azure04 DNS notes in [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup).
+
+This matters after destroy/redeploy because the Azure resource group is recreated from scratch, including the static website storage account. Cloudflare must point the public hostname at the current Azure static website CNAME target, and Azure Storage must accept the custom domain before the Entra redirect test can prove the environment is healthy.
+
+#### Clean Rebuild Testing
+
+Run:
+
+```bash
+pnpm run destroy:testing
+pnpm run deploy:testing
+pnpm run testing:get-storage-account
+pnpm run testing:connect-domain
+pnpm run testing:migrate:azure
+```
+
+If `testing:connect-domain` says the CNAME is wrong or missing, update the testing Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+
+```bash
+pnpm run testing:connect-domain
+```
+
+Open:
+
+```text
+https://testing.all-checks-out.com
+```
+
+Sign in. The deployed testing site should redirect through Microsoft Entra and then back to:
+
+```text
+https://testing.all-checks-out.com/auth/callback
+```
+
+#### Clean Rebuild Staging
+
+Run:
+
+```bash
+pnpm run destroy:staging
+pnpm run deploy:staging
+pnpm run staging:get-storage-account
+pnpm run staging:connect-domain
+pnpm run staging:migrate:azure
+```
+
+If `staging:connect-domain` says the CNAME is wrong or missing, update the staging Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+
+```bash
+pnpm run staging:connect-domain
+```
+
+Open:
+
+```text
+https://staging.all-checks-out.com
+```
+
+Sign in. The deployed staging site should redirect through Microsoft Entra and then back to:
+
+```text
+https://staging.all-checks-out.com/auth/callback
+```
+
+#### Clean Rebuild Production
+
+Run:
+
+```bash
+pnpm run destroy:production
+pnpm run deploy:production
+pnpm run production:get-storage-account
+pnpm run production:connect-domain
+pnpm run production:migrate:azure
+```
+
+Production deletion asks for confirmation. Type exactly:
+
+```text
+DELETE-PRODUCTION
+```
+
+If `production:connect-domain` says the CNAME is wrong or missing, update the production Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+
+```bash
+pnpm run production:connect-domain
+```
+
+Open:
+
+```text
+https://www.all-checks-out.com
+```
+
+Sign in. The deployed production site should redirect through Microsoft Entra and then back to:
+
+```text
+https://www.all-checks-out.com/auth/callback
+```
+
+`destroy:testing` deletes Azure resources. `migrations:reset` changes repository files by deleting EF migration source files and leaving the repo with no migration history. `testing:migrate:azure` creates the first fresh `InitialSqlFoundation` migration from the current model if no migrations exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
+
+If you are still actively reshaping the first EF model and deliberately want to replace the migration source files, reset migrations before the testing deployment:
+
+```bash
+pnpm run destroy:testing
+pnpm run migrations:reset
+pnpm run deploy:testing
+pnpm run testing:get-storage-account
+pnpm run testing:connect-domain
+pnpm run testing:migrate:azure
+```
+
+## Reference: Azure04 Cloudflare DNS Setup
+
+Markdown files can link to sections in the same file. The clean rebuild instructions above link here with:
+
+```text
+[Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup)
+```
+
+The following Azure04 DNS sections are copied unaltered. Azure06 uses the production hostname `www.all-checks-out.com`; use the Azure06 production hostname when testing this repository.
+
+## Step 5: Connect Testing DNS In Cloudflare
+
+After testing deploys, the script prints an Azure URL like:
+
+```text
+https://<storage-account>.z33.web.core.windows.net/
+```
+
+Create or update this Cloudflare record:
+
+```text
+Type: CNAME
+Name: testing
+Target: <storage-account>.z33.web.core.windows.net
+Proxy status: Proxied
+```
+
+Recommended Cloudflare settings:
+
+- SSL/TLS encryption mode: `Full`
+- Always Use HTTPS: enabled
+- Automatic HTTPS Rewrites: enabled
+
+After DNS is ready, test:
+
+```text
+https://testing.all-checks-out.com
+```
+
+## Step 7: Connect Staging DNS In Cloudflare
+
+After staging deploys, create or update:
+
+```text
+Type: CNAME
+Name: staging
+Target: the staging *.web.core.windows.net host
+Proxy status: Proxied
+```
+
+Then test:
+
+```text
+https://staging.all-checks-out.com
+```
+
+## Step 9: Connect Production DNS In Cloudflare
+
+After production deploys, create or update:
+
+```text
+Type: CNAME
+Name: @
+Target: the production *.web.core.windows.net host
+Proxy status: Proxied
+```
+
+Cloudflare may show this as CNAME flattening for the apex domain.
+
+Then test:
+
+```text
+https://all-checks-out.com
 ```
 
 ## Script Configuration
