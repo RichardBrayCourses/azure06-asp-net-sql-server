@@ -1,5 +1,55 @@
 # Azure06 ASP.NET SQL Server
 
+## Completely Clean Out An Environment
+
+These commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Key Vault, Azure SQL server, Azure SQL database, and any data in that environment.
+
+Run from the repository root after `az login`:
+
+```bash
+cd /Users/richardbray/src/azure06-asp-net-sql-server
+az account show --output table
+```
+
+Delete testing completely:
+
+```bash
+pnpm run destroy:testing
+```
+
+Delete staging completely:
+
+```bash
+pnpm run destroy:staging
+```
+
+Delete production completely:
+
+```bash
+pnpm run destroy:production
+```
+
+Production deletion asks for confirmation. Type exactly:
+
+```text
+DELETE-PRODUCTION
+```
+
+Check whether an environment resource group still exists:
+
+```bash
+az group exists --name all-checks-out-testing-rg
+az group exists --name all-checks-out-staging-rg
+az group exists --name all-checks-out-production-rg
+```
+
+After a clean-out, redeploy from scratch with:
+
+```bash
+pnpm run deploy:testing
+pnpm run testing:migrate:azure
+```
+
 This repository deploys the All Checks Out React shell, ASP.NET Core cases API model, and Azure SQL database support into three Azure environments:
 
 | Environment | Branch | Resource group | Public URL |
@@ -397,10 +447,10 @@ var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().i
 Builds a stable App Configuration store name.
 
 ```bicep
-var sqlServerName = take('${appName}-sql-${uniqueString(resourceGroup().id)}', 63)
+var sqlServerName = take('${appName}-${sqlLocation}-sql-${uniqueString(resourceGroup().id, sqlLocation)}', 63)
 ```
 
-Builds a stable Azure SQL server name and trims it to Azure's SQL server name length limit.
+Builds a stable Azure SQL server name that includes the SQL region. Including `sqlLocation` avoids reusing a failed server name if SQL has to move to another Azure region. `take(..., 63)` trims it to Azure's SQL server name length limit.
 
 ```bicep
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)

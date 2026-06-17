@@ -43,7 +43,7 @@ param sqlDatabaseName string = 'AllChecksOut'
 
 var storageAccountName = take('${appName}${uniqueString(resourceGroup().id)}', 24)
 var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().id)}', 50)
-var sqlServerName = take('${appName}-sql-${uniqueString(resourceGroup().id)}', 63)
+var sqlServerName = take('${appName}-${sqlLocation}-sql-${uniqueString(resourceGroup().id, sqlLocation)}', 63)
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)
 
 resource websiteStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
