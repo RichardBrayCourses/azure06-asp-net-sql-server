@@ -1,38 +1,5 @@
 # Entra Test Users With The Existing Tenant
 
-## Critical Demo-Tenant MFA Step
-
-Before creating or using demo users, disable Microsoft Entra Security Defaults for this demo tenant.
-
-If you skip this step, Microsoft can force demo users such as:
-
-```text
-jonathan.price@artyuptickgmail.onmicrosoft.com
-```
-
-to set up MFA. That breaks the intended demo flow where someone can sign in with only a username and password.
-
-Run this from the repository root:
-
-```bash
-pnpm run entra:disable-security-defaults
-```
-
-If Azure CLI does not already have the required Microsoft Graph permission, the script opens Azure login and retries automatically. Approve the requested permission if prompted.
-
-If the script says PowerShell 7 is not installed, use the portal fallback:
-
-```text
-https://entra.microsoft.com
-Identity > Overview > Properties > Manage security defaults
-Security defaults: Disabled
-Save
-```
-
-Do not try to fix this by running `az login --scope https://graph.microsoft.com/Policy.ReadWrite.SecurityDefaults`. Azure CLI can fail with `AADSTS65002` for that Microsoft Graph scope. The supported scriptable path is Microsoft Graph PowerShell.
-
-Only do this for a disposable/demo tenant. Do not disable Security Defaults for a tenant that protects real users or production data.
-
 ## Purpose
 
 This document explains how to create demo sign-ins without Gmail and without Gmail `+` aliases.
@@ -131,13 +98,33 @@ The expected value is:
 artyuptickgmail.onmicrosoft.com
 ```
 
-## Step 2: Create The Test Users
+## Step 2: Disable Security Defaults For Demo Sign-In
 
-Before continuing, make sure the required demo-tenant MFA step above has been completed:
+Before creating or using demo users, disable Microsoft Entra Security Defaults for this demo tenant.
 
-```bash
-pnpm run entra:disable-security-defaults
+If you skip this step, Microsoft can force demo users such as:
+
+```text
+jonathan.price@artyuptickgmail.onmicrosoft.com
 ```
+
+to set up MFA. That breaks the intended demo flow where someone can sign in with only a username and password.
+
+Use the Azure portal:
+
+```text
+1. Open https://entra.microsoft.com
+2. Go to Identity > Overview > Properties
+3. Select Manage security defaults
+4. Set Security defaults to Disabled
+5. Save
+```
+
+Only do this for a disposable/demo tenant. Do not disable Security Defaults for a tenant that protects real users or production data.
+
+## Step 3: Create The Test Users
+
+Before continuing, make sure Security Defaults have been disabled in the Azure portal as described in Step 2.
 
 This must happen before handing demo credentials to other people. Recreating users does not reliably remove MFA prompts if Security Defaults are still enabled at the tenant level.
 
@@ -232,7 +219,13 @@ The output file is:
 tmp/entra-test-users/testing-users.jsonl
 ```
 
-It contains the Microsoft Entra object IDs needed in Step 3. It may also contain temporary passwords, so keep it private. The `tmp/` folder is ignored by git.
+The same file exists at this full path:
+
+```text
+/Users/richardbray/src/azure06-asp-net-sql-server/tmp/entra-test-users/testing-users.jsonl
+```
+
+It contains the Microsoft Entra object IDs needed in Step 4 and the temporary passwords needed for first sign-in. Look for each row's `temporaryPassword` value. Keep this file private. The `tmp/` folder is ignored by git.
 
 ### Manual Approach
 
@@ -263,7 +256,7 @@ Account enabled: yes
 
 Repeat this for each seeded user.
 
-## Step 3: Update The Application Database
+## Step 4: Update The Application Database
 
 The application database must use the real Microsoft Entra object IDs.
 
@@ -461,13 +454,9 @@ UserAccounts.EntraObjectId: 11111111-2222-3333-4444-555555555555
 
 Use Jonathan's real object ID, not the example value above.
 
-## Step 4: Sign In As A Test User
+## Step 5: Sign In As A Test User
 
-Confirm that Security Defaults have been disabled for this demo tenant before testing sign-in:
-
-```bash
-pnpm run entra:disable-security-defaults
-```
+Confirm that Security Defaults have been disabled for this demo tenant before testing sign-in. The portal setting is at `https://entra.microsoft.com` under `Identity > Overview > Properties > Manage security defaults`.
 
 Open the testing site:
 
@@ -481,11 +470,15 @@ Sign in as:
 jonathan.price@artyuptickgmail.onmicrosoft.com
 ```
 
-Use the temporary password from Microsoft Entra.
+Use the `temporaryPassword` value from:
+
+```text
+/Users/richardbray/src/azure06-asp-net-sql-server/tmp/entra-test-users/testing-users.jsonl
+```
 
 Microsoft may ask you to change the password on first sign-in.
 
-Microsoft should not ask demo users to set up MFA. If it does, recheck the Security Defaults step at the top of this document.
+Microsoft should not ask demo users to set up MFA. If it does, recheck Step 2.
 
 ## What Success Looks Like
 
@@ -497,11 +490,7 @@ The application recognises the signed-in user as the matching seeded application
 
 ## What To Check If It Fails
 
-If Microsoft asks the demo user to set up MFA, Security Defaults are probably still enabled for the tenant. Run:
-
-```bash
-pnpm run entra:disable-security-defaults
-```
+If Microsoft asks the demo user to set up MFA, Security Defaults are probably still enabled for the tenant. Open `https://entra.microsoft.com`, go to `Identity > Overview > Properties > Manage security defaults`, set Security defaults to `Disabled`, and save.
 
 If Microsoft says the account does not exist, check that the user exists in Microsoft Entra.
 
@@ -520,3 +509,9 @@ artyuptickgmail.onmicrosoft.com
 Copy each user's Microsoft Entra object ID.
 
 Put each real object ID into the matching application database user row.
+
+Use each user's `temporaryPassword` from:
+
+```text
+/Users/richardbray/src/azure06-asp-net-sql-server/tmp/entra-test-users/testing-users.jsonl
+```
