@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 TARGET_DATABASE_VERSION="${2:-}"
+FUNCTIONS_API_PROJECT="$MONOREPO_DIR/services/functions-api/AllChecksOut.FunctionsApi.csproj"
+FUNCTIONS_API_DIR="$MONOREPO_DIR/services/functions-api"
 DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/functions-api/Data/Migrations"
 
 ensure_initial_database_source() {
@@ -20,10 +22,12 @@ ensure_initial_database_source() {
   echo ""
 
   dotnet ef migrations add InitialSqlFoundation \
-    --project "$MONOREPO_DIR/services/functions-api" \
-    --startup-project "$MONOREPO_DIR/services/functions-api" \
+    --project "$FUNCTIONS_API_DIR" \
+    --startup-project "$FUNCTIONS_API_DIR" \
     --output-dir Data/Migrations
 }
+
+dotnet restore "$FUNCTIONS_API_PROJECT"
 
 ensure_initial_database_source
 
@@ -85,13 +89,13 @@ echo ""
 update_database() {
   if [[ -n "$TARGET_DATABASE_VERSION" ]]; then
     dotnet ef database update "$TARGET_DATABASE_VERSION" \
-      --project services/functions-api \
-      --startup-project services/functions-api \
+      --project "$FUNCTIONS_API_DIR" \
+      --startup-project "$FUNCTIONS_API_DIR" \
       --connection "$AZURE_SQL_CONNECTION_STRING"
   else
     dotnet ef database update \
-      --project services/functions-api \
-      --startup-project services/functions-api \
+      --project "$FUNCTIONS_API_DIR" \
+      --startup-project "$FUNCTIONS_API_DIR" \
       --connection "$AZURE_SQL_CONNECTION_STRING"
   fi
 }

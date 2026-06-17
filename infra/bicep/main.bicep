@@ -166,10 +166,6 @@ resource functionsApi 'Microsoft.Web/sites@2024-04-01' = {
           value: '~4'
         }
         {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
-        }
-        {
           name: 'DOTNET_ENVIRONMENT'
           value: 'Production'
         }

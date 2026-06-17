@@ -1,0 +1,54 @@
+pnpm run deploy:testing
+$ bash scripts/deploy-infra.sh testing && bash scripts/update-database.sh testing && bash scripts/deploy-api.sh testing && bash scripts/generate-shell-env.sh testing && pnpm -C apps/shell run build && bash scripts/upload-shell.sh testing && bash scripts/show-url.sh testing
+
+Deploying infrastructure for environment: testing
+Creating resource group: all-checks-out-testing-rg
+
+Location    Name
+----------  -------------------------
+uksouth     all-checks-out-testing-rg
+
+Ensuring Microsoft Entra app registration: All Checks Out Azure06 testing
+
+
+Deploying Bicep template...
+
+Name                    State      Timestamp                         Mode         ResourceGroup
+----------------------  ---------  --------------------------------  -----------  -------------------------
+all-checks-out-testing  Succeeded  2026-06-17T15:09:16.549278+00:00  Incremental  all-checks-out-testing-rg
+
+Setting Azure SQL Microsoft Entra admin: arty.uptick_gmail.com#EXT#@artyuptickgmail.onmicrosoft.com
+
+
+Enabling static website hosting on: allcheckouttest2lwwkfpxl
+
+
+
+Infrastructure deployment complete.
+Environment: testing
+Domain: https://testing.all-checks-out.com
+API URL: https://allcheckouttest-testing-func-2lwwkfpxl2qiq.azurewebsites.net
+Entra client ID: ec0269b9-a4e0-4993-8e91-bada06509c06
+Entra API scope: api://ec0269b9-a4e0-4993-8e91-bada06509c06/access_as_user
+Azure SQL server: allcheckouttest-swedencentral-sql-qfuvgs7y6gilu.database.windows.net
+Azure SQL database: AllChecksOut
+
+Allowing current client IP on Azure SQL firewall: 2.121.19.163
+
+Updating Azure SQL database.
+Environment: testing
+
+/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
+Unable to retrieve project metadata. Ensure it's an SDK-style project.
+
+Database update attempt 1 failed. Waiting 20 seconds before retrying...
+
+/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
+Unable to retrieve project metadata. Ensure it's an SDK-style project.
+
+Database update attempt 2 failed. Waiting 20 seconds before retrying...
+
+/usr/local/share/dotnet/sdk/10.0.301/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file '/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/obj/project.assets.json' not found. Run a NuGet package restore to generate this file. [/Users/richardbray/src/azure06-asp-net-sql-server/services/functions-api/AllChecksOut.FunctionsApi.csproj]
+Unable to retrieve project metadata. Ensure it's an SDK-style project.
+[ELIFECYCLE] Command failed with exit code 1.
+$ 
