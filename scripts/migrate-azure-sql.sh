@@ -36,7 +36,7 @@ if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
     exit 1
   fi
 
-  AZURE_SQL_CONNECTION_STRING="Server=tcp:$SQL_SERVER_FQDN,1433;Initial Catalog=$SQL_DATABASE_NAME;User ID=$SQL_ADMIN_LOGIN;Password=$AZURE_SQL_ADMIN_PASSWORD;Encrypt=True;TrustServerCertificate=False;"
+  AZURE_SQL_CONNECTION_STRING="Server=tcp:$SQL_SERVER_FQDN,1433;Initial Catalog=$SQL_DATABASE_NAME;User ID=$SQL_ADMIN_LOGIN;Password=$AZURE_SQL_ADMIN_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connect Timeout=60;ConnectRetryCount=3;ConnectRetryInterval=10;"
 fi
 
 if [[ "${AZURE_SQL_CONFIGURE_FIREWALL:-1}" == "1" ]]; then
@@ -64,14 +64,31 @@ echo "Running EF Core migrations against Azure SQL."
 echo "Environment: $ENVIRONMENT_NAME"
 echo ""
 
-if [[ -n "$MIGRATION" ]]; then
-  dotnet ef database update "$MIGRATION" \
-    --project services/cases-api \
-    --startup-project services/cases-api \
-    --connection "$AZURE_SQL_CONNECTION_STRING"
-else
-  dotnet ef database update \
-    --project services/cases-api \
-    --startup-project services/cases-api \
-    --connection "$AZURE_SQL_CONNECTION_STRING"
-fi
+run_migration() {
+  if [[ -n "$MIGRATION" ]]; then
+    dotnet ef database update "$MIGRATION" \
+      --project services/cases-api \
+      --startup-project services/cases-api \
+      --connection "$AZURE_SQL_CONNECTION_STRING"
+  else
+    dotnet ef database update \
+      --project services/cases-api \
+      --startup-project services/cases-api \
+      --connection "$AZURE_SQL_CONNECTION_STRING"
+  fi
+}
+
+for attempt in 1 2 3; do
+  if run_migration; then
+    exit 0
+  fi
+
+  if [[ "$attempt" == "3" ]]; then
+    exit 1
+  fi
+
+  echo ""
+  echo "Migration attempt $attempt failed. Waiting 20 seconds before retrying..."
+  echo ""
+  sleep 20
+done

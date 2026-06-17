@@ -2,7 +2,7 @@
 
 ## Completely Clean Out An Environment
 
-These commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Key Vault, Azure SQL server, Azure SQL database, and any data in that environment.
+These commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Key Vault, Azure SQL server, Azure SQL database, and any data in that environment. The destroy script also purges the soft-deleted Key Vault name so the next clean deploy can recreate it.
 
 Run from the repository root after `az login`:
 

@@ -14,6 +14,16 @@ ensure_key_vault() {
     return
   fi
 
+  if az keyvault list-deleted \
+    --query "[?name=='$AZURE_KEY_VAULT_NAME'] | [0].name" \
+    --output tsv | grep -q "^$AZURE_KEY_VAULT_NAME$"; then
+    echo "Purging deleted Azure Key Vault before recreating it: $AZURE_KEY_VAULT_NAME" >&2
+    az keyvault purge \
+      --name "$AZURE_KEY_VAULT_NAME" \
+      --location "$AZURE_LOCATION" \
+      --output none
+  fi
+
   echo "Creating Azure Key Vault: $AZURE_KEY_VAULT_NAME"
   az keyvault create \
     --resource-group "$AZURE_RESOURCE_GROUP" \
