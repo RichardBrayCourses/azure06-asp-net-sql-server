@@ -48,22 +48,22 @@ internal static class AllChecksOutSeedData
             Agent("ledgerfield-legal", "Ledgerfield Legal LLP"));
 
         modelBuilder.Entity<UserAccount>().HasData(
-            User("user-jonathan-price", "Jonathan Price", "arty.uptick@gmail.com"),
-            User("user-amara-singh", "Amara Singh", "amara.singh@dpaa.example"),
-            User("user-aisha-khan", "Aisha Khan", "aisha.khan@northstar-cloud.example"),
-            User("user-michael-reeves", "Michael Reeves", "michael.reeves@northstar-cloud.example"),
-            User("user-lewis-green", "Lewis Green", "lewis.green@cobalt-workflow.example"),
-            User("user-amelia-wright", "Amelia Wright", "amelia.wright@cobalt-workflow.example"),
-            User("user-maya-patel", "Maya Patel", "maya.patel@pinebridge-data.example"),
-            User("user-owen-clarke", "Owen Clarke", "owen.clarke@asteria-identity.example"),
-            User("user-rachel-morgan", "Rachel Morgan", "rachel.morgan@harrington.example"),
-            User("user-peter-walsh", "Peter Walsh", "peter.walsh@harrington.example"),
-            User("user-sophie-turner", "Sophie Turner", "sophie.turner@mercury-retail.example"),
-            User("user-benjamin-foster", "Benjamin Foster", "benjamin.foster@mercury-retail.example"),
-            User("user-priya-shah", "Priya Shah", "priya.shah@sentinel-grc.example"),
-            User("user-george-evans", "George Evans", "george.evans@sentinel-grc.example"),
-            User("user-ellen-brooks", "Ellen Brooks", "ellen.brooks@ledgerfield.example"),
-            User("user-nadia-cole", "Nadia Cole", "nadia.cole@portfolio.example"));
+            User("user-jonathan-price", "Jonathan Price", "arty.uptick+jonathan-price@gmail.com"),
+            User("user-amara-singh", "Amara Singh", "arty.uptick+amara-singh@gmail.com"),
+            User("user-aisha-khan", "Aisha Khan", "arty.uptick+aisha-khan@gmail.com"),
+            User("user-michael-reeves", "Michael Reeves", "arty.uptick+michael-reeves@gmail.com"),
+            User("user-lewis-green", "Lewis Green", "arty.uptick+lewis-green@gmail.com"),
+            User("user-amelia-wright", "Amelia Wright", "arty.uptick+amelia-wright@gmail.com"),
+            User("user-maya-patel", "Maya Patel", "arty.uptick+maya-patel@gmail.com"),
+            User("user-owen-clarke", "Owen Clarke", "arty.uptick+owen-clarke@gmail.com"),
+            User("user-rachel-morgan", "Rachel Morgan", "arty.uptick+rachel-morgan@gmail.com"),
+            User("user-peter-walsh", "Peter Walsh", "arty.uptick+peter-walsh@gmail.com"),
+            User("user-sophie-turner", "Sophie Turner", "arty.uptick+sophie-turner@gmail.com"),
+            User("user-benjamin-foster", "Benjamin Foster", "arty.uptick+benjamin-foster@gmail.com"),
+            User("user-priya-shah", "Priya Shah", "arty.uptick+priya-shah@gmail.com"),
+            User("user-george-evans", "George Evans", "arty.uptick+george-evans@gmail.com"),
+            User("user-ellen-brooks", "Ellen Brooks", "arty.uptick+ellen-brooks@gmail.com"),
+            User("user-nadia-cole", "Nadia Cole", "arty.uptick+nadia-cole@gmail.com"));
 
         modelBuilder.Entity<AuthorityUser>().HasData(
             Membership<AuthorityUser>("authority-user-jonathan-price", "northstar-association", "user-jonathan-price"),

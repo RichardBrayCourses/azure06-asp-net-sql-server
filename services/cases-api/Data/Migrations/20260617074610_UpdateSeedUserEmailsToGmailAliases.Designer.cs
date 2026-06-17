@@ -4,6 +4,7 @@ using AllChecksOut.Cases.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AllChecksOut.Cases.Api.Data.Migrations
 {
     [DbContext(typeof(AllChecksOutDbContext))]
-    partial class AllChecksOutDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617074610_UpdateSeedUserEmailsToGmailAliases")]
+    partial class UpdateSeedUserEmailsToGmailAliases
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

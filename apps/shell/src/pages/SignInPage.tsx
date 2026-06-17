@@ -13,7 +13,6 @@ import {
   userIdentities,
 } from "@/data/console";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 
 type PrimaryContextType = AuthenticatableUserMembership["entityType"];
 type EntityOption = {
@@ -121,15 +120,7 @@ export default function SignInPage() {
     <main className="min-h-screen bg-[#f8f8f8] px-4 py-10 text-[#0b0c0c] dark:bg-background dark:text-foreground sm:px-6">
       <div className="mx-auto max-w-xl">
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-3xl font-bold">Sign in</h1>
-            <Link
-              to="/set-email-addresses"
-              className="inline-flex h-10 items-center border border-[#0b0c0c] bg-white px-4 text-sm font-bold hover:bg-[#f3f2f1] dark:bg-card"
-            >
-              Set email addresses
-            </Link>
-          </div>
+          <h1 className="text-3xl font-bold">Sign in</h1>
         </div>
 
         <section>

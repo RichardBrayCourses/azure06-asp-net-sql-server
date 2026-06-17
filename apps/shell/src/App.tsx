@@ -23,7 +23,6 @@ import {
 } from "./pages/ConsolePages";
 import NotFound from "./pages/NotFound";
 import EntraCallbackPage from "./pages/EntraCallbackPage";
-import SetEmailAddressesPage from "./pages/SetEmailAddressesPage";
 import SignInPage from "./pages/SignInPage";
 
 const AppContent = () => {
@@ -37,7 +36,6 @@ const AppContent = () => {
     return (
       <Routes>
         <Route path="/auth/callback" element={<EntraCallbackPage />} />
-        <Route path="/set-email-addresses" element={<SetEmailAddressesPage />} />
         <Route path="*" element={<SignInPage />} />
       </Routes>
     );
