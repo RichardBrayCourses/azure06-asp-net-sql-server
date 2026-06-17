@@ -154,7 +154,7 @@ public sealed class MeEndpointTests
                 new Claim("oid", authorization.Parameter),
                 new Claim("tid", "tenant-test"),
                 new Claim("sub", "subject-test"),
-                new Claim("email", "arty.uptick+aisha-khan@gmail.com"),
+                new Claim("email", "arty.uptick+aisha.khan@gmail.com"),
                 new Claim("name", "Aisha Khan"),
             };
             var identity = new ClaimsIdentity(claims, SchemeName);
