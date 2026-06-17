@@ -1,6 +1,9 @@
 @description('The Azure region where the storage account will be created.')
 param location string = resourceGroup().location
 
+@description('The Azure region where Azure SQL will be created.')
+param sqlLocation string = location
+
 @description('A short lowercase name used to build the storage account name.')
 @minLength(3)
 @maxLength(16)
@@ -65,7 +68,7 @@ resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2023-0
 
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
   name: sqlServerName
-  location: location
+  location: sqlLocation
   properties: {
     administratorLogin: sqlAdministratorLogin
     administratorLoginPassword: sqlAdministratorPassword
@@ -87,7 +90,7 @@ resource sqlAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-08-01' 
 resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
   parent: sqlServer
   name: sqlDatabaseName
-  location: location
+  location: sqlLocation
   sku: {
     name: 'GP_S_Gen5'
     tier: 'GeneralPurpose'

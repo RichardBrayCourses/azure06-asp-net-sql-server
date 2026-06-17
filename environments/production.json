@@ -2,6 +2,7 @@
   "environmentName": "production",
   "resourceGroup": "all-checks-out-production-rg",
   "location": "uksouth",
+  "sqlLocation": "swedencentral",
   "appName": "allcheckoutprod",
   "deploymentName": "all-checks-out-production",
   "domainName": "www.all-checks-out.com"

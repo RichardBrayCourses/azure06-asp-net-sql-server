@@ -26,6 +26,7 @@ az deployment group what-if \
   --template-file "$BICEP_TEMPLATE_FILE" \
   --parameters \
     location="$AZURE_LOCATION" \
+    sqlLocation="$AZURE_SQL_LOCATION" \
     appName="$AZURE_APP_NAME" \
     environmentName="$ENVIRONMENT_NAME" \
     domainName="$AZURE_DOMAIN_NAME" \

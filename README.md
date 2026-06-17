@@ -181,6 +181,7 @@ Each JSON file contains:
   "environmentName": "testing",
   "resourceGroup": "all-checks-out-testing-rg",
   "location": "uksouth",
+  "sqlLocation": "swedencentral",
   "appName": "allcheckouttest",
   "deploymentName": "all-checks-out-testing",
   "domainName": "testing.all-checks-out.com"
@@ -192,6 +193,8 @@ Each JSON file contains:
 `ENVIRONMENT_NAME` is the logical environment name, such as `testing`.
 
 `AZURE_LOCATION` is the Azure region, defaulting to the JSON `location`.
+
+`AZURE_SQL_LOCATION` is the Azure SQL region, defaulting to JSON `sqlLocation` and then falling back to `AZURE_LOCATION`.
 
 `AZURE_RESOURCE_GROUP` is the resource group for this environment.
 
@@ -296,6 +299,13 @@ param location string = resourceGroup().location
 ```
 
 Adds help text for the `location` parameter and defaults the region to the resource group's region.
+
+```bicep
+@description('The Azure region where Azure SQL will be created.')
+param sqlLocation string = location
+```
+
+Allows Azure SQL to use a different region from the static website resources. This is useful when a subscription is blocked from provisioning Azure SQL in the primary environment region.
 
 ```bicep
 @description('A short lowercase name used to build the storage account name.')
@@ -464,7 +474,7 @@ Starts the Azure SQL logical server resource.
 
 ```bicep
   name: sqlServerName
-  location: location
+  location: sqlLocation
   properties: {
     administratorLogin: sqlAdministratorLogin
     administratorLoginPassword: sqlAdministratorPassword
@@ -475,7 +485,7 @@ Starts the Azure SQL logical server resource.
 }
 ```
 
-Creates the server with the configured admin login, Key Vault password, TLS 1.2 minimum, public network access, and SQL Server API version `12.0`.
+Creates the server in `sqlLocation` with the configured admin login, Key Vault password, TLS 1.2 minimum, public network access, and SQL Server API version `12.0`.
 
 ```bicep
 resource sqlAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
@@ -504,10 +514,10 @@ Starts the Azure SQL database resource.
 ```bicep
   parent: sqlServer
   name: sqlDatabaseName
-  location: location
+  location: sqlLocation
 ```
 
-Creates the database under the SQL server, with the configured database name and region.
+Creates the database under the SQL server, with the configured database name and SQL region.
 
 ```bicep
   sku: {

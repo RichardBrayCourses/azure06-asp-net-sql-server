@@ -35,8 +35,15 @@ read_environment_value() {
   node -e "const fs = require('fs'); const config = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); const value = config[process.argv[2]]; if (value === undefined || value === null || value === '') process.exit(1); process.stdout.write(String(value));" "$ENVIRONMENT_FILE" "$key"
 }
 
+read_optional_environment_value() {
+  local key="$1"
+  node -e "const fs = require('fs'); const config = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); const value = config[process.argv[2]]; if (value === undefined || value === null || value === '') process.exit(0); process.stdout.write(String(value));" "$ENVIRONMENT_FILE" "$key"
+}
+
 ENVIRONMENT_NAME="$(read_environment_value environmentName)"
 AZURE_LOCATION="${AZURE_LOCATION:-$(read_environment_value location)}"
+AZURE_SQL_LOCATION="${AZURE_SQL_LOCATION:-$(read_optional_environment_value sqlLocation)}"
+AZURE_SQL_LOCATION="${AZURE_SQL_LOCATION:-$AZURE_LOCATION}"
 AZURE_RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-$(read_environment_value resourceGroup)}"
 AZURE_DEPLOYMENT_NAME="${AZURE_DEPLOYMENT_NAME:-$(read_environment_value deploymentName)}"
 AZURE_APP_NAME="${AZURE_APP_NAME:-$(read_environment_value appName)}"
