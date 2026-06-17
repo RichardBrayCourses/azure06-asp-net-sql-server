@@ -46,9 +46,21 @@ az group exists --name all-checks-out-production-rg
 After a clean-out, redeploy from scratch with:
 
 ```bash
+pnpm run migrations:reset
 pnpm run deploy:testing
 pnpm run testing:migrate:azure
 ```
+
+For a completely fresh testing rebuild while the repo is still being actively shaped, use:
+
+```bash
+pnpm run destroy:testing
+pnpm run migrations:reset
+pnpm run deploy:testing
+pnpm run testing:migrate:azure
+```
+
+`destroy:testing` deletes Azure resources. `migrations:reset` changes repository files by deleting EF migration source files and leaving the repo with no migration history. `testing:migrate:azure` creates the first fresh `InitialSqlFoundation` migration from the current model if no migrations exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
 
 This repository deploys the All Checks Out React shell, ASP.NET Core cases API model, and Azure SQL database support into three Azure environments:
 
@@ -92,6 +104,7 @@ Use local deployment when you want your terminal to deploy directly to Azure.
 First-time testing deployment:
 
 ```bash
+pnpm run migrations:reset
 pnpm run deploy:testing
 pnpm run testing:migrate:azure
 ```
@@ -758,7 +771,7 @@ The migration script:
 Run a specific target migration in Azure:
 
 ```bash
-DEPLOY_ENV=testing pnpm run backend:migrate:azure -- 20260617004047_UpdateJonathanSeedEmail
+DEPLOY_ENV=testing pnpm run backend:migrate:azure -- InitialSqlFoundation
 ```
 
 Use an explicit Azure SQL connection string instead of deployment outputs:
@@ -778,6 +791,18 @@ dotnet ef migrations add <MigrationName> \
   --startup-project services/cases-api \
   --output-dir Data/Migrations
 ```
+
+### Reset EF Migrations During Development
+
+If no important database has successfully applied the existing migrations yet, you can scrub the EF migration history and return the repo to a pre-migration source state:
+
+```bash
+pnpm run migrations:reset
+```
+
+The reset script deletes `services/cases-api/Data/Migrations/*.cs` and lists the resulting migration stack without connecting to a database. It should report that no migrations were found.
+
+When you next run `pnpm run testing:migrate:azure`, the Azure migration script creates a new `InitialSqlFoundation` migration from the current model if no migration files exist, then applies it to the Azure SQL database. Use this clean-room workflow during development, not after migrations have been applied to an environment with data you need to keep.
 
 List migrations without connecting to a database:
 

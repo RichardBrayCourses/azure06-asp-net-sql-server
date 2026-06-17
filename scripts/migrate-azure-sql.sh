@@ -6,6 +6,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
 MIGRATION="${1:-}"
+MIGRATIONS_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
+
+ensure_initial_migration() {
+  mkdir -p "$MIGRATIONS_DIR"
+
+  if find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name "*.cs" ! -name "*ModelSnapshot.cs" | grep -q .; then
+    return
+  fi
+
+  echo ""
+  echo "No EF Core migrations found. Creating initial migration: InitialSqlFoundation"
+  echo ""
+
+  dotnet ef migrations add InitialSqlFoundation \
+    --project "$MONOREPO_DIR/services/cases-api" \
+    --startup-project "$MONOREPO_DIR/services/cases-api" \
+    --output-dir Data/Migrations
+}
+
+ensure_initial_migration
 
 if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
   if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
