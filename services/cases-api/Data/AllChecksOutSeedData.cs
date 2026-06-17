@@ -48,7 +48,7 @@ internal static class AllChecksOutSeedData
             Agent("ledgerfield-legal", "Ledgerfield Legal LLP"));
 
         modelBuilder.Entity<UserAccount>().HasData(
-            User("user-jonathan-price", "Jonathan Price", "jonathan.price@dpaa.example"),
+            User("user-jonathan-price", "Jonathan Price", "arty.uptick@gmail.com"),
             User("user-amara-singh", "Amara Singh", "amara.singh@dpaa.example"),
             User("user-aisha-khan", "Aisha Khan", "aisha.khan@northstar-cloud.example"),
             User("user-michael-reeves", "Michael Reeves", "michael.reeves@northstar-cloud.example"),

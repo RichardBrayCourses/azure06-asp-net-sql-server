@@ -5,6 +5,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
+if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
+  echo "AZURE_SQL_ADMIN_PASSWORD is required to preview Azure SQL changes."
+  echo "Example: AZURE_SQL_ADMIN_PASSWORD='choose-a-strong-password' DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:what-if"
+  exit 1
+fi
+
 az group create \
   --name "$AZURE_RESOURCE_GROUP" \
   --location "$AZURE_LOCATION" \
@@ -30,4 +36,7 @@ az deployment group what-if \
     domainName="$AZURE_DOMAIN_NAME" \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
-    entraApiScope="$ENTRA_API_SCOPE"
+    entraApiScope="$ENTRA_API_SCOPE" \
+    sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
+    sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
+    sqlDatabaseName="$AZURE_SQL_DATABASE_NAME"

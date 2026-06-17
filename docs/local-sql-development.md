@@ -22,6 +22,8 @@ ConnectionStrings__AllChecksOut="Server=...;Database=...;..."
 
 ## Run Migrations
 
+The local migration command targets the Docker SQL Server connection string from `appsettings.Development.json`:
+
 ```bash
 pnpm run backend:migrate
 ```
@@ -33,6 +35,22 @@ dotnet ef database update \
   --project services/cases-api \
   --startup-project services/cases-api
 ```
+
+## Run Migrations Against Azure SQL
+
+Use the Azure-specific command when you want to update the cloud database instead of local Docker SQL:
+
+```bash
+AZURE_SQL_ADMIN_PASSWORD="<the-environment-sql-password>" DEPLOY_ENV=testing pnpm run backend:migrate:azure
+```
+
+Or use the environment shortcut:
+
+```bash
+AZURE_SQL_ADMIN_PASSWORD="<the-environment-sql-password>" pnpm run testing:migrate:azure
+```
+
+The Azure migration script reads the SQL server and database names from the environment deployment outputs, allows your current public IP through the SQL firewall, and passes an explicit Azure SQL connection string to EF Core.
 
 ## Build And Test
 

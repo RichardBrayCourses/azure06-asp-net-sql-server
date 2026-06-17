@@ -54,7 +54,8 @@ Read this before running commands.
 | `pnpm run shell:build`               | Builds `apps/shell/dist`. Needs Vite Entra values in `apps/shell/.env`.                                            | No change.                                                                                                             | No change.                                                           | No change.                                |
 | `pnpm run repo:init`              | Creates a local Git repo if needed, then creates any missing course branches. Existing branches are skipped. | No change.                                                                                                             | If `origin` exists, pushes all four branches idempotently.           | No change.                                |
 | `pnpm run repo:init <github-url>` | Creates a local Git repo if needed, creates missing branches, and configures `origin`.                       | No change.                                                                                                             | Adds or verifies `origin` and pushes all four branches idempotently. | No change.                                |
-| `pnpm run deploy:testing`         | Generates `apps/shell/.env`, builds the UI, and uploads `apps/shell/dist`.                                         | Creates or updates testing infrastructure, Entra app registration, App Configuration values, and static website files. | No change.                                                           | No change.                                |
+| `pnpm run deploy:testing`         | Generates `apps/shell/.env`, builds the UI, and uploads `apps/shell/dist`.                                         | Creates or updates testing infrastructure, Azure SQL, Entra app registration, App Configuration values, and static website files. | No change.                                                           | No change.                                |
+| `pnpm run testing:migrate:azure`  | Runs EF Core migrations from your terminal.                                                                   | Applies pending EF Core migrations to the testing Azure SQL database.                                                   | No change.                                                           | No change.                                |
 | `pnpm run release:testing`        | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `testing`, triggering GitHub Actions.                         | No change.                                |
 | `pnpm run release:staging`        | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `staging`, triggering GitHub Actions.                         | No change.                                |
 | `pnpm run release:production`     | Runs Git commands locally.                                                                                   | Not directly. Azure changes later when GitHub Actions deploys.                                                         | Pushes `production`, triggering GitHub Actions.                      | No change.                                |
@@ -82,6 +83,7 @@ changes Azure testing only. It does not change staging, production, GitHub, or C
 | Install dependencies on your machine            | Once per machine, then again when dependencies change                                 | `pnpm install`                                                                                                      |
 | Initialise, repair, or publish course branches  | Once per copied repo, or whenever one of the four local or remote branches is missing | `pnpm run repo:init`                                                                                                |
 | Configure GitHub Actions access to Azure        | Once per GitHub repo, then again only if you need to replace the credential           | `REPO_PREFIX_CODE=azure06 APP_PREFIX="all-checks-out-$REPO_PREFIX_CODE-github-actions" pnpm run setup:github-azure` |
+| Configure the Azure SQL password secret         | Once per GitHub Environment                                                           | Add `AZURE_SQL_ADMIN_PASSWORD` to the `testing`, `staging`, and `production` GitHub Environments                    |
 | Deploy testing for the first time               | Once initially, then as needed                                                        | `pnpm run release:testing` or `pnpm run deploy:testing`                                                             |
 | Configure testing registered domain             | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Promote tested work into staging                | Many times                                                                            | `pnpm run release:staging`                                                                                          |
@@ -195,7 +197,7 @@ Run this from the Azure06 repository root:
 
 ```bash
 cd /Users/richardbray/src/azure06-asp-net-sql-server
-pnpm run deploy:testing
+AZURE_SQL_ADMIN_PASSWORD="<choose-a-strong-password>" pnpm run deploy:testing
 ```
 
 The correct Azure06 output includes:
@@ -213,6 +215,22 @@ shell:env
 ```
 
 If the output jumps straight from `infra:deploy` to `shell:build`, you are probably in an earlier repo such as Azure04.
+
+### 4a.1b Apply Azure SQL Migrations
+
+The deployment creates Azure SQL, but the ASP.NET Core API does not run EF Core migrations on startup. Apply migrations explicitly:
+
+```bash
+AZURE_SQL_ADMIN_PASSWORD="<the-same-password>" pnpm run testing:migrate:azure
+```
+
+This command reads the Azure SQL server and database names from the deployment outputs, temporarily allows your current public IP through the SQL firewall, and runs:
+
+```bash
+dotnet ef database update --project services/cases-api --startup-project services/cases-api
+```
+
+against Azure SQL. It does not touch the local Docker SQL Server.
 
 ### 4a.2 Test Testing
 

@@ -5,6 +5,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
+if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
+  echo "AZURE_SQL_ADMIN_PASSWORD is required to deploy Azure SQL."
+  echo "Example: AZURE_SQL_ADMIN_PASSWORD='choose-a-strong-password' DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
+  exit 1
+fi
+
 echo ""
 echo "Deploying infrastructure for environment: $ENVIRONMENT_NAME"
 echo "Creating resource group: $AZURE_RESOURCE_GROUP"
@@ -67,6 +73,9 @@ az deployment group create \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
     entraApiScope="$ENTRA_API_SCOPE" \
+    sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
+    sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
+    sqlDatabaseName="$AZURE_SQL_DATABASE_NAME" \
   --output table
 
 STORAGE_ACCOUNT_NAME=$(az deployment group show \
@@ -103,4 +112,6 @@ echo "Infrastructure deployment complete."
 echo "Environment: $ENVIRONMENT_NAME"
 echo "Domain: https://$AZURE_DOMAIN_NAME"
 echo "Entra client ID: $ENTRA_CLIENT_ID"
+echo "Azure SQL server: $(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_DEPLOYMENT_NAME" --query "properties.outputs.sqlServerFullyQualifiedDomainName.value" --output tsv)"
+echo "Azure SQL database: $(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_DEPLOYMENT_NAME" --query "properties.outputs.sqlDatabaseName.value" --output tsv)"
 echo ""

@@ -28,8 +28,19 @@ param entraApiScope string = ''
 ])
 param appConfigurationSku string = 'free'
 
+@description('The Azure SQL administrator login name.')
+param sqlAdministratorLogin string = 'allchecksoutadmin'
+
+@description('The Azure SQL administrator password.')
+@secure()
+param sqlAdministratorPassword string
+
+@description('The Azure SQL database name.')
+param sqlDatabaseName string = 'AllChecksOut'
+
 var storageAccountName = take('${appName}${uniqueString(resourceGroup().id)}', 24)
 var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().id)}', 50)
+var sqlServerName = take('${appName}-sql-${uniqueString(resourceGroup().id)}', 63)
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)
 
 resource websiteStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -49,6 +60,44 @@ resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2023-0
   location: location
   sku: {
     name: appConfigurationSku
+  }
+}
+
+resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
+  name: sqlServerName
+  location: location
+  properties: {
+    administratorLogin: sqlAdministratorLogin
+    administratorLoginPassword: sqlAdministratorPassword
+    minimalTlsVersion: '1.2'
+    publicNetworkAccess: 'Enabled'
+    version: '12.0'
+  }
+}
+
+resource sqlAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
+  parent: sqlServer
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
+  parent: sqlServer
+  name: sqlDatabaseName
+  location: location
+  sku: {
+    name: 'GP_S_Gen5'
+    tier: 'GeneralPurpose'
+    family: 'Gen5'
+    capacity: 1
+  }
+  properties: {
+    autoPauseDelay: 60
+    minCapacity: json('0.5')
+    requestedBackupStorageRedundancy: 'Local'
   }
 }
 
@@ -99,3 +148,7 @@ resource entraApiScopeConfig 'Microsoft.AppConfiguration/configurationStores/key
 
 output storageAccountName string = websiteStorage.name
 output appConfigurationName string = appConfiguration.name
+output sqlServerName string = sqlServer.name
+output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
+output sqlDatabaseName string = sqlDatabase.name
+output sqlAdministratorLogin string = sqlAdministratorLogin
