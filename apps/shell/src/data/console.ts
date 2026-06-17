@@ -636,6 +636,7 @@ export type SearchItem = {
 const now = "2026-06-15T09:00:00.000Z";
 const created = "2026-01-03T09:00:00.000Z";
 const authorityTerminologyStorageKey = "authorityTerminology";
+const userEmailOverridesStorageKey = "userEmailOverrides";
 
 export const defaultTerminologyLabels: TerminologyLabels = {
   authority: { singular: "authority", plural: "authorities" },
@@ -715,6 +716,37 @@ function saveAuthorityTerminologyToStorage(authorityTerminology: AuthorityTermin
     ]),
   );
   window.localStorage.setItem(authorityTerminologyStorageKey, JSON.stringify(stored));
+}
+
+function getStoredUserEmailOverrides() {
+  if (typeof window === "undefined") return new Map<UserAccountId, string>();
+
+  try {
+    const stored = window.localStorage.getItem(userEmailOverridesStorageKey);
+    if (!stored) return new Map<UserAccountId, string>();
+
+    const parsed = JSON.parse(stored);
+    if (!parsed || typeof parsed !== "object") return new Map<UserAccountId, string>();
+
+    return new Map(
+      Object.entries(parsed as Record<string, unknown>)
+        .filter((entry): entry is [UserAccountId, string] => {
+          const [userAccountId, email] = entry;
+          return userAccountId.trim().length > 0 && typeof email === "string" && email.includes("@");
+        })
+        .map(([userAccountId, email]) => [userAccountId, email.trim().toLowerCase()]),
+    );
+  } catch {
+    return new Map<UserAccountId, string>();
+  }
+}
+
+function saveUserEmailOverride(userAccountId: UserAccountId, email: string) {
+  if (typeof window === "undefined") return;
+
+  const stored = Object.fromEntries(getStoredUserEmailOverrides());
+  stored[userAccountId] = email.trim().toLowerCase();
+  window.localStorage.setItem(userEmailOverridesStorageKey, JSON.stringify(stored));
 }
 
 const iconByTaskCode: Record<string, typeof ImageUp> = {
@@ -1110,6 +1142,7 @@ export class InMemoryAllChecksOutDatabase {
 
   constructor() {
     this.hydrateAuthorityTerminology();
+    this.hydrateUserEmailOverrides();
   }
 
   listAuthorities() {
@@ -1134,21 +1167,13 @@ export class InMemoryAllChecksOutDatabase {
     if (!normalizedEmail || !normalizedEmail.includes("@")) {
       throw new Error("Enter a valid email address.");
     }
-    if (
-      this.userAccounts.some(
-        (account) =>
-          account.id !== userAccountId &&
-          account.toDto().email.toLowerCase() === normalizedEmail,
-      )
-    ) {
-      throw new Error("A user account with this email already exists.");
-    }
     const updated = new UserAccountEntity({
       ...existing,
       email: normalizedEmail,
       updatedAt: this.timestamp(),
     });
     this.replaceUserAccount(userAccountId, updated);
+    saveUserEmailOverride(userAccountId, normalizedEmail);
     return updated.toDto();
   }
 
@@ -2313,6 +2338,18 @@ export class InMemoryAllChecksOutDatabase {
       } else {
         this.authorityTerminology.push(new AuthorityTerminologyEntity(terminology));
       }
+    });
+  }
+
+  protected hydrateUserEmailOverrides() {
+    getStoredUserEmailOverrides().forEach((email, userAccountId) => {
+      const existing = this.userAccounts.find((account) => account.id === userAccountId)?.toDto();
+      if (!existing) return;
+
+      this.replaceUserAccount(userAccountId, new UserAccountEntity({
+        ...existing,
+        email,
+      }));
     });
   }
 

@@ -126,18 +126,26 @@ export class ApiBackedAllChecksOutDatabase extends InMemoryAllChecksOutDatabase 
       await Promise.all(stakeholderIds.map((stakeholderId) => this.hydrateStakeholder(stakeholderId)));
       await Promise.all(agentIds.map((agentId) => this.hydrateAgent(agentId)));
       await Promise.all(this.cases.map((caseRecord) => this.hydrateCase(caseRecord.id)));
+      this.hydrateUserEmailOverrides();
     } finally {
       this.isHydrating = false;
     }
   }
 
   async updateUserAccountEmail(userAccountId: UserAccountId, email: string) {
-    const account = await apiRequest<UserAccountDto>(`/api/users/${userAccountId}/email`, {
-      method: "PATCH",
-      body: { email },
-    });
-    this.upsertEntity(this.userAccounts, UserAccountEntity, account);
-    return account;
+    try {
+      const account = await apiRequest<UserAccountDto>(`/api/users/${userAccountId}/email`, {
+        method: "PATCH",
+        body: { email },
+      });
+      this.upsertEntity(this.userAccounts, UserAccountEntity, account);
+      return account;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        return super.updateUserAccountEmail(userAccountId, email);
+      }
+      throw error;
+    }
   }
 
   async registerUserAccountWithEntra(userAccountId: UserAccountId, entraObjectId: string) {
