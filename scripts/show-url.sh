@@ -3,15 +3,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
-OUTPUT_MODE="${1:-summary}"
+OUTPUT_MODE="${2:-summary}"
 
 case "$OUTPUT_MODE" in
   summary | --target-only) ;;
   *)
     echo "Unknown option: $OUTPUT_MODE"
-    echo "Usage: bash scripts/show-url.sh [--target-only]"
+    echo "Usage: bash scripts/show-url.sh <testing|staging|production> [--target-only]"
     exit 1
     ;;
 esac
@@ -46,7 +46,7 @@ WEBSITE_HOST="${WEBSITE_HOST%/}"
 if [[ -z "$WEBSITE_URL" || "$WEBSITE_URL" == "null" ]]; then
   echo ""
   echo "Static website URL was not found for storage account: $STORAGE_ACCOUNT_NAME"
-  echo "Run pnpm run infra:deploy first so static website hosting is enabled."
+  echo "Run pnpm run deploy:$ENVIRONMENT_NAME first so static website hosting is enabled."
   echo ""
   exit 1
 fi

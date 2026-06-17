@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 if [[ "$ENVIRONMENT_NAME" == "production" ]]; then
   echo ""

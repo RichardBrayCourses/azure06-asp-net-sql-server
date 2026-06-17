@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 STORAGE_ACCOUNT_NAME=$(az deployment group show \
   --resource-group "$AZURE_RESOURCE_GROUP" \

@@ -72,6 +72,14 @@ fi
 
 This repository targets .NET 10.
 
+Validate the codebase:
+
+```bash
+pnpm run type-check
+pnpm run backend:build
+pnpm run backend:test
+```
+
 Sign in to Azure:
 
 ```bash
@@ -84,6 +92,18 @@ If the wrong subscription is selected:
 ```bash
 az account set --subscription "<subscription-id-or-name>"
 ```
+
+### Local Shell Development
+
+Run the shell against a specific deployed environment:
+
+```bash
+pnpm run shell:dev:testing
+pnpm run shell:dev:staging
+pnpm run shell:dev:production
+```
+
+Each command reads that environment's Azure App Configuration values, writes the Vite `.env` file, and then starts the local shell.
 
 ### Local Deployment
 
@@ -112,7 +132,7 @@ pnpm run database:update:production
 
 Use the same commands for later deployments. The deploy command creates or updates infrastructure and uploads the frontend. The database update command applies the current database source to Azure SQL.
 
-The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation. It is not typed, stored, or reused. `infra:deploy` sets the current Azure identity as the SQL Microsoft Entra admin, and the database update command authenticates with Microsoft Entra.
+The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation. It is not typed, stored, or reused. `deploy:<environment>` sets the current Azure identity as the SQL Microsoft Entra admin, and the database update command authenticates with Microsoft Entra.
 
 ### GitHub Actions Deployment
 
@@ -175,9 +195,9 @@ pnpm run whatif:production
 Print the Azure static website URL and Cloudflare CNAME target:
 
 ```bash
-DEPLOY_ENV=testing pnpm run shell:url
-DEPLOY_ENV=staging pnpm run shell:url
-DEPLOY_ENV=production pnpm run shell:url
+pnpm run url:testing
+pnpm run url:staging
+pnpm run url:production
 ```
 
 Delete an environment resource group:
@@ -355,15 +375,15 @@ The deployed production site should redirect through Microsoft Entra and then ba
 https://www.all-checks-out.com/auth/callback
 ```
 
-`destroy:testing` deletes Azure resources. `database:source:reset` changes repository files by deleting EF database source files and leaving the repo with no database source history. `database:update:testing` creates the first fresh `InitialSqlFoundation` source from the current model if no database source files exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
+`destroy:testing` deletes Azure resources. `migration-source:reset` changes repository files by deleting EF database source files and leaving the repo with no database source history. `database:update:testing` creates the first fresh `InitialSqlFoundation` source from the current model if no database source files exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
 
 If you are still actively reshaping the first EF model and deliberately want to replace the database source files:
 
-`Use the same testing clean rebuild flow, but insert database:source:reset before deploy:testing.`
+`Use the same testing clean rebuild flow, but insert migration-source:reset before deploy:testing.`
 
 ```bash
 pnpm run destroy:testing
-pnpm run database:source:reset
+pnpm run migration-source:reset
 pnpm run deploy:testing
 pnpm run get-storage-account:testing
 ```
@@ -409,25 +429,23 @@ pnpm run get-storage-account:production
 
 ## Script Configuration
 
-All deployment scripts load `scripts/config.sh`. That file decides which environment is being deployed and converts it into concrete Azure names.
+All deployment scripts load `scripts/config.sh`. The package scripts pass the environment as an explicit script argument, and `config.sh` converts that environment into concrete Azure names.
 
 ### Environment Selection
 
-The public package scripts set `DEPLOY_ENV`:
+The public package scripts pass the environment directly:
 
 ```json
-"deploy:testing": "DEPLOY_ENV=testing pnpm run deploy-everything",
-"deploy:staging": "DEPLOY_ENV=staging pnpm run deploy-everything",
-"deploy:production": "DEPLOY_ENV=production pnpm run deploy-everything"
+"deploy:testing": "bash scripts/deploy-infra.sh testing",
+"deploy:staging": "bash scripts/deploy-infra.sh staging",
+"deploy:production": "bash scripts/deploy-infra.sh production"
 ```
 
-`scripts/config.sh` then uses:
+`scripts/config.sh` reads the first argument:
 
 ```bash
-AZURE_ENVIRONMENT="${AZURE_ENVIRONMENT:-${DEPLOY_ENV:-}}"
+SELECTED_ENVIRONMENT="${1:-}"
 ```
-
-`AZURE_ENVIRONMENT` can override `DEPLOY_ENV`, but normal commands use `DEPLOY_ENV`.
 
 Only these environment names are accepted:
 
@@ -495,23 +513,22 @@ Each JSON file contains:
 
 ```text
 deploy:testing
-  -> deploy-everything
-  -> infra:deploy
-  -> shell:env
-  -> shell:build
-  -> shell:upload
-  -> shell:url
+  -> scripts/deploy-infra.sh testing
+  -> scripts/generate-shell-env.sh testing
+  -> pnpm -C apps/shell run build
+  -> scripts/upload-shell.sh testing
+  -> scripts/show-url.sh testing
 ```
 
-`infra:deploy` runs `scripts/deploy-infra.sh`.
+`scripts/deploy-infra.sh <environment>` deploys infrastructure.
 
-`shell:env` runs `scripts/generate-shell-env.sh`.
+`scripts/generate-shell-env.sh <environment>` writes the shell environment files.
 
-`shell:build` runs the Vite build in `apps/shell`.
+`pnpm -C apps/shell run build` runs the Vite build.
 
-`shell:upload` runs `scripts/upload-shell.sh`.
+`scripts/upload-shell.sh <environment>` uploads the shell build.
 
-`shell:url` runs `scripts/show-url.sh`.
+`scripts/show-url.sh <environment>` prints the environment URLs.
 
 ### SQL Authentication Flow
 
@@ -959,7 +976,7 @@ RESET-PRODUCTION-DATABASE
 Use this only while the first database shape is still being deliberately reworked:
 
 ```bash
-pnpm run database:source:reset
+pnpm run migration-source:reset
 ```
 
 The source reset script deletes `services/cases-api/Data/Migrations/*.cs` and lists the resulting EF database source state. The next `database:update:<environment>` command recreates `InitialSqlFoundation` from the current model and seed data, then applies it to Azure SQL.

@@ -3,9 +3,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
-TARGET_DATABASE_VERSION="${1:-}"
+TARGET_DATABASE_VERSION="${2:-}"
 DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
 
 ensure_initial_database_source() {
@@ -48,7 +48,7 @@ if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
 
   if [[ -z "$SQL_SERVER_FQDN" || -z "$SQL_DATABASE_NAME" || -z "$SQL_SERVER_NAME" ]]; then
     echo "Azure SQL deployment outputs were not found."
-    echo "Run: DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
+    echo "Run: pnpm run deploy:$ENVIRONMENT_NAME"
     exit 1
   fi
 

@@ -3,11 +3,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 if [ ! -d "$SHELL_DIST_DIR" ]; then
   echo "Build output not found at $SHELL_DIST_DIR"
-  echo "Run: pnpm run shell:build"
+  echo "Run: pnpm -C apps/shell run build"
   exit 1
 fi
 

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 OUTPUT_FILE="$MONOREPO_DIR/apps/shell/.env"
 ENVIRONMENT_OUTPUT_FILE="$MONOREPO_DIR/apps/shell/.env.generated.$ENVIRONMENT_NAME"
@@ -20,7 +20,7 @@ APP_CONFIGURATION_NAME=$(az deployment group show \
 
 if [[ -z "$APP_CONFIGURATION_NAME" ]]; then
   echo "App Configuration store was not found in deployment outputs."
-  echo "Run: DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
+  echo "Run: pnpm run deploy:$ENVIRONMENT_NAME"
   exit 1
 fi
 

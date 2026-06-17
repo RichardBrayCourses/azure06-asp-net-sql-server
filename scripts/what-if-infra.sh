@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 AZURE_SQL_ADMIN_PASSWORD="${AZURE_SQL_ADMIN_PASSWORD:-WhatIfOnly_ChangeMe12345%}"
 
 az group create \

@@ -5,25 +5,25 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MONOREPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-AZURE_ENVIRONMENT="${AZURE_ENVIRONMENT:-${DEPLOY_ENV:-}}"
+SELECTED_ENVIRONMENT="${1:-}"
 
-if [[ -z "$AZURE_ENVIRONMENT" ]]; then
+if [[ -z "$SELECTED_ENVIRONMENT" ]]; then
   echo "No environment selected."
   echo "Use one of: testing, staging, production."
-  echo "Example: DEPLOY_ENV=testing pnpm run deploy-everything"
+  echo "Example: bash scripts/deploy-infra.sh testing"
   exit 1
 fi
 
-case "$AZURE_ENVIRONMENT" in
+case "$SELECTED_ENVIRONMENT" in
   testing | staging | production) ;;
   *)
-    echo "Unknown environment: $AZURE_ENVIRONMENT"
+    echo "Unknown environment: $SELECTED_ENVIRONMENT"
     echo "Use one of: testing, staging, production."
     exit 1
     ;;
 esac
 
-ENVIRONMENT_FILE="$MONOREPO_DIR/environments/$AZURE_ENVIRONMENT.json"
+ENVIRONMENT_FILE="$MONOREPO_DIR/environments/$SELECTED_ENVIRONMENT.json"
 
 if [[ ! -f "$ENVIRONMENT_FILE" ]]; then
   echo "Environment configuration not found: $ENVIRONMENT_FILE"

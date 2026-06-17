@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/config.sh"
+source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 SQL_SERVER_NAME=$(az deployment group show \
   --resource-group "$AZURE_RESOURCE_GROUP" \
@@ -65,13 +65,13 @@ echo ""
 echo "Redeploying infrastructure so Azure SQL database is created again."
 echo ""
 
-"$SCRIPT_DIR/deploy-infra.sh"
+"$SCRIPT_DIR/deploy-infra.sh" "$ENVIRONMENT_NAME"
 
 echo ""
 echo "Applying database source to fresh Azure SQL database."
 echo ""
 
-"$SCRIPT_DIR/update-database.sh"
+"$SCRIPT_DIR/update-database.sh" "$ENVIRONMENT_NAME"
 
 echo ""
 echo "Database reset complete for environment: $ENVIRONMENT_NAME"
