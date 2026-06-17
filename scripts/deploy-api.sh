@@ -6,10 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 PUBLISH_DIR="$(mktemp -d "${TMPDIR:-/tmp}/all-checks-out-api-publish.XXXXXX")"
-PACKAGE_FILE="$(mktemp "${TMPDIR:-/tmp}/all-checks-out-api.XXXXXX.zip")"
+PACKAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/all-checks-out-api-package.XXXXXX")"
+PACKAGE_FILE="$PACKAGE_DIR/all-checks-out-api.zip"
 
 cleanup() {
   rm -rf "$PUBLISH_DIR"
+  rm -rf "$PACKAGE_DIR"
   rm -f "$PACKAGE_FILE"
 }
 trap cleanup EXIT
@@ -38,6 +40,8 @@ echo ""
 
 dotnet publish "$MONOREPO_DIR/services/cases-api/Cases.Api.csproj" \
   --configuration Release \
+  --runtime win-x64 \
+  --self-contained true \
   --output "$PUBLISH_DIR"
 
 (

@@ -32,7 +32,7 @@ param entraAudience string = ''
 param demoSignInKey string = ''
 
 @description('The Azure App Service Plan SKU used by the API host.')
-param apiAppServicePlanSku string = 'B1'
+param apiAppServicePlanSku string = 'F1'
 
 @description('The Azure App Configuration SKU.')
 @allowed([
@@ -128,16 +128,13 @@ resource apiAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   sku: {
     name: apiAppServicePlanSku
   }
-  kind: 'linux'
-  properties: {
-    reserved: true
-  }
+  kind: 'app'
 }
 
 resource casesApiApp 'Microsoft.Web/sites@2023-12-01' = {
   name: apiAppName
   location: location
-  kind: 'app,linux'
+  kind: 'app'
   dependsOn: [
     sqlDatabase
   ]
@@ -145,7 +142,6 @@ resource casesApiApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: apiAppServicePlan.id
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|10.0'
       ftpsState: 'FtpsOnly'
       minTlsVersion: '1.2'
       appSettings: [
