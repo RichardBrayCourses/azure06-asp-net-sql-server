@@ -5,18 +5,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
-MIGRATION="${1:-}"
-MIGRATIONS_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
+TARGET_DATABASE_VERSION="${1:-}"
+DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
 
-ensure_initial_migration() {
-  mkdir -p "$MIGRATIONS_DIR"
+ensure_initial_database_source() {
+  mkdir -p "$DATABASE_SOURCE_DIR"
 
-  if find "$MIGRATIONS_DIR" -maxdepth 1 -type f -name "*.cs" ! -name "*ModelSnapshot.cs" | grep -q .; then
+  if find "$DATABASE_SOURCE_DIR" -maxdepth 1 -type f -name "*.cs" ! -name "*ModelSnapshot.cs" | grep -q .; then
     return
   fi
 
   echo ""
-  echo "No EF Core migrations found. Creating initial migration: InitialSqlFoundation"
+  echo "No EF Core database source found. Creating initial database source: InitialSqlFoundation"
   echo ""
 
   dotnet ef migrations add InitialSqlFoundation \
@@ -25,7 +25,7 @@ ensure_initial_migration() {
     --output-dir Data/Migrations
 }
 
-ensure_initial_migration
+ensure_initial_database_source
 
 if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
   SQL_SERVER_FQDN=$(az deployment group show \
@@ -78,13 +78,13 @@ if [[ "${AZURE_SQL_CONFIGURE_FIREWALL:-1}" == "1" ]]; then
 fi
 
 echo ""
-echo "Running EF Core migrations against Azure SQL."
+echo "Updating Azure SQL database."
 echo "Environment: $ENVIRONMENT_NAME"
 echo ""
 
-run_migration() {
-  if [[ -n "$MIGRATION" ]]; then
-    dotnet ef database update "$MIGRATION" \
+update_database() {
+  if [[ -n "$TARGET_DATABASE_VERSION" ]]; then
+    dotnet ef database update "$TARGET_DATABASE_VERSION" \
       --project services/cases-api \
       --startup-project services/cases-api \
       --connection "$AZURE_SQL_CONNECTION_STRING"
@@ -97,7 +97,7 @@ run_migration() {
 }
 
 for attempt in 1 2 3; do
-  if run_migration; then
+  if update_database; then
     exit 0
   fi
 
@@ -106,7 +106,7 @@ for attempt in 1 2 3; do
   fi
 
   echo ""
-  echo "Migration attempt $attempt failed. Waiting 20 seconds before retrying..."
+  echo "Database update attempt $attempt failed. Waiting 20 seconds before retrying..."
   echo ""
   sleep 20
 done

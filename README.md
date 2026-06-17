@@ -93,26 +93,26 @@ First-time testing deployment:
 
 ```bash
 pnpm run deploy:testing
-pnpm run testing:migrate:azure
+pnpm run database:update:testing
 ```
 
 First-time staging deployment:
 
 ```bash
 pnpm run deploy:staging
-pnpm run staging:migrate:azure
+pnpm run database:update:staging
 ```
 
 First-time production deployment:
 
 ```bash
 pnpm run deploy:production
-pnpm run production:migrate:azure
+pnpm run database:update:production
 ```
 
-Use the same commands for later deployments. The deploy command creates or updates infrastructure and uploads the frontend. The migrate command applies any pending EF Core migrations to Azure SQL.
+Use the same commands for later deployments. The deploy command creates or updates infrastructure and uploads the frontend. The database update command applies the current database source to Azure SQL.
 
-The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation. It is not typed, stored, or reused. `infra:deploy` sets the current Azure identity as the SQL Microsoft Entra admin, and the Azure migration command authenticates with Microsoft Entra.
+The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation. It is not typed, stored, or reused. `infra:deploy` sets the current Azure identity as the SQL Microsoft Entra admin, and the database update command authenticates with Microsoft Entra.
 
 ### GitHub Actions Deployment
 
@@ -160,7 +160,7 @@ pnpm run release:production
 pnpm run production:wait-for-deploy
 ```
 
-GitHub Actions runs `deploy:<environment>` and then `<environment>:migrate:azure`. The Azure login service principal becomes the SQL Microsoft Entra admin during deployment, and migrations authenticate with that same identity. No GitHub SQL password secret is required.
+GitHub Actions runs `deploy:<environment>` and then `database:update:<environment>`. The Azure login service principal becomes the SQL Microsoft Entra admin during deployment, and the database update authenticates with that same identity. No GitHub SQL password secret is required.
 
 ### Preview, Inspect, And Delete
 
@@ -231,11 +231,11 @@ Target: the value printed by pnpm run testing:get-storage-account
 Proxy status: DNS only while connecting the domain
 ```
 
-`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
+`After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
 pnpm run testing:connect-domain
-pnpm run testing:migrate:azure
+pnpm run database:update:testing
 ```
 
 `Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
@@ -275,11 +275,11 @@ Target: the value printed by pnpm run staging:get-storage-account
 Proxy status: DNS only while connecting the domain
 ```
 
-`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
+`After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
 pnpm run staging:connect-domain
-pnpm run staging:migrate:azure
+pnpm run database:update:staging
 ```
 
 `Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
@@ -332,11 +332,11 @@ Target: the value printed by pnpm run production:get-storage-account
 Proxy status: DNS only while connecting the domain
 ```
 
-`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
+`After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
 pnpm run production:connect-domain
-pnpm run production:migrate:azure
+pnpm run database:update:production
 ```
 
 `Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
@@ -355,26 +355,26 @@ The deployed production site should redirect through Microsoft Entra and then ba
 https://www.all-checks-out.com/auth/callback
 ```
 
-`destroy:testing` deletes Azure resources. `migrations:reset` changes repository files by deleting EF migration source files and leaving the repo with no migration history. `testing:migrate:azure` creates the first fresh `InitialSqlFoundation` migration from the current model if no migrations exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
+`destroy:testing` deletes Azure resources. `database:source:reset` changes repository files by deleting EF database source files and leaving the repo with no database source history. `database:update:testing` creates the first fresh `InitialSqlFoundation` source from the current model if no database source files exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
 
-If you are still actively reshaping the first EF model and deliberately want to replace the migration source files:
+If you are still actively reshaping the first EF model and deliberately want to replace the database source files:
 
-`Use the same testing clean rebuild flow, but insert migrations:reset before deploy:testing.`
+`Use the same testing clean rebuild flow, but insert database:source:reset before deploy:testing.`
 
 ```bash
 pnpm run destroy:testing
-pnpm run migrations:reset
+pnpm run database:source:reset
 pnpm run deploy:testing
 pnpm run testing:get-storage-account
 ```
 
 `Update the Cloudflare CNAME testing record to the printed target.`
 
-`Connect the custom domain and migrate.`
+`Connect the custom domain and update the database.`
 
 ```bash
 pnpm run testing:connect-domain
-pnpm run testing:migrate:azure
+pnpm run database:update:testing
 ```
 
 ### Cloudflare DNS Settings
@@ -521,7 +521,7 @@ For local deployment, the current identity is the user from `az login`.
 
 For GitHub Actions deployment, the current identity is the service principal from the `AZURE_CREDENTIALS` secret used by `azure/login`.
 
-`scripts/migrate-azure-sql.sh` then uses a Microsoft Entra connection string:
+`scripts/update-database.sh` then uses a Microsoft Entra connection string:
 
 ```text
 Authentication=Active Directory Default
@@ -907,161 +907,62 @@ output sqlAdministratorLogin string = sqlAdministratorLogin
 
 Outputs the SQL administrator username. The password is never output or stored.
 
-## Database And EF Core Commands
+## Database Commands
 
-### Local SQL Server
+### Update A Database
 
-Start local SQL Server in Docker:
-
-```bash
-pnpm run sql:up
-```
-
-Stop local SQL Server:
-
-```bash
-pnpm run sql:down
-```
-
-Apply EF migrations to local Docker SQL:
-
-```bash
-pnpm run backend:migrate
-```
-
-Equivalent direct command:
-
-```bash
-dotnet ef database update \
-  --project services/cases-api \
-  --startup-project services/cases-api
-```
-
-The local connection string lives in:
-
-```text
-services/cases-api/appsettings.Development.json
-```
-
-Override it for one command:
-
-```bash
-ConnectionStrings__AllChecksOut="Server=...;Database=...;..." pnpm run backend:migrate
-```
-
-### Azure SQL
-
-Deploy Azure SQL and other infrastructure:
+Deploy infrastructure first:
 
 ```bash
 pnpm run deploy:testing
 ```
 
-Apply EF migrations to Azure SQL:
+Then update the Azure SQL database for that environment:
 
 ```bash
-pnpm run testing:migrate:azure
+pnpm run database:update:testing
+pnpm run database:update:staging
+pnpm run database:update:production
 ```
 
-The migration script:
+The database update script:
 
 1. Reads SQL server/database outputs from the Azure deployment.
 2. Adds your current public IP to the SQL firewall as `AllowMigrationClient`.
-3. Runs `dotnet ef database update` with a Microsoft Entra Azure SQL connection string.
-
-Run a specific target migration in Azure:
-
-```bash
-DEPLOY_ENV=testing pnpm run backend:migrate:azure -- InitialSqlFoundation
-```
+3. Applies the current EF database source with a Microsoft Entra Azure SQL connection string.
 
 Use an explicit Azure SQL connection string instead of deployment outputs:
 
 ```bash
 AZURE_SQL_CONNECTION_STRING="Server=tcp:...;Initial Catalog=...;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;" \
-  DEPLOY_ENV=testing pnpm run backend:migrate:azure
+  pnpm run database:update:testing
 ```
 
-### Create A New EF Migration
+### Reset A Database
 
-Edit the EF model or seed data first, then run:
+Use this when you want a fresh Azure SQL database built from the current database source and seed data:
 
 ```bash
-dotnet ef migrations add <MigrationName> \
-  --project services/cases-api \
-  --startup-project services/cases-api \
-  --output-dir Data/Migrations
+pnpm run database:reset:testing
+pnpm run database:reset:staging
+pnpm run database:reset:production
 ```
 
-### Reset EF Migrations During Development
+Production database reset asks for this confirmation:
 
-If no important database has successfully applied the existing migrations yet, you can scrub the EF migration history and return the repo to a pre-migration source state:
+```text
+RESET-PRODUCTION-DATABASE
+```
+
+### Reset Database Source
+
+Use this only while the first database shape is still being deliberately reworked:
 
 ```bash
-pnpm run migrations:reset
+pnpm run database:source:reset
 ```
 
-The reset script deletes `services/cases-api/Data/Migrations/*.cs` and lists the resulting migration stack without connecting to a database. It should report that no migrations were found.
-
-When you next run `pnpm run testing:migrate:azure`, the Azure migration script creates a new `InitialSqlFoundation` migration from the current model if no migration files exist, then applies it to the Azure SQL database. Use this clean-room workflow during development, not after migrations have been applied to an environment with data you need to keep.
-
-List migrations without connecting to a database:
-
-```bash
-dotnet ef migrations list \
-  --project services/cases-api \
-  --startup-project services/cases-api \
-  --no-connect
-```
-
-Generate an idempotent SQL script:
-
-```bash
-dotnet ef migrations script \
-  --project services/cases-api \
-  --startup-project services/cases-api \
-  --idempotent \
-  --output migration.sql
-```
-
-Remove the last migration before it has been applied:
-
-```bash
-dotnet ef migrations remove \
-  --project services/cases-api \
-  --startup-project services/cases-api
-```
-
-### Reset Azure SQL Back To Seed Data
-
-Testing:
-
-```bash
-SQL_SERVER_NAME=$(az deployment group show \
-  --resource-group all-checks-out-testing-rg \
-  --name all-checks-out-testing \
-  --query "properties.outputs.sqlServerName.value" \
-  --output tsv)
-
-SQL_DATABASE_NAME=$(az deployment group show \
-  --resource-group all-checks-out-testing-rg \
-  --name all-checks-out-testing \
-  --query "properties.outputs.sqlDatabaseName.value" \
-  --output tsv)
-
-az sql db delete \
-  --resource-group all-checks-out-testing-rg \
-  --server "$SQL_SERVER_NAME" \
-  --name "$SQL_DATABASE_NAME" \
-  --yes
-
-pnpm run deploy:testing
-pnpm run testing:migrate:azure
-```
-
-Staging: replace `testing` with `staging`, use `all-checks-out-staging-rg`, and use deployment name `all-checks-out-staging`.
-
-Production: replace `testing` with `production`, use `all-checks-out-production-rg`, and use deployment name `all-checks-out-production`. This deletes production data.
+The source reset script deletes `services/cases-api/Data/Migrations/*.cs` and lists the resulting EF database source state. The next `database:update:<environment>` command recreates `InitialSqlFoundation` from the current model and seed data, then applies it to Azure SQL.
 
 ### Check Database Resources
 
