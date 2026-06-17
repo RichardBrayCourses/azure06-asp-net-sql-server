@@ -9,9 +9,7 @@ MIGRATION="${1:-}"
 
 if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
   if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
-    echo "AZURE_SQL_ADMIN_PASSWORD is required unless AZURE_SQL_CONNECTION_STRING is set."
-    echo "Example: AZURE_SQL_ADMIN_PASSWORD='your-password' DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run backend:migrate:azure"
-    exit 1
+    AZURE_SQL_ADMIN_PASSWORD="$("$SCRIPT_DIR/sql-password.sh" get)"
   fi
 
   SQL_SERVER_FQDN=$(az deployment group show \
@@ -34,7 +32,7 @@ if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
 
   if [[ -z "$SQL_SERVER_FQDN" || -z "$SQL_DATABASE_NAME" || -z "$SQL_ADMIN_LOGIN" ]]; then
     echo "Azure SQL deployment outputs were not found."
-    echo "Run: AZURE_SQL_ADMIN_PASSWORD='your-password' DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
+    echo "Run: DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
     exit 1
   fi
 

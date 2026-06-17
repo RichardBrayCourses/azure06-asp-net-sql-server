@@ -5,12 +5,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
-if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
-  echo "AZURE_SQL_ADMIN_PASSWORD is required to deploy Azure SQL."
-  echo "Example: AZURE_SQL_ADMIN_PASSWORD='choose-a-strong-password' DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
-  exit 1
-fi
-
 echo ""
 echo "Deploying infrastructure for environment: $ENVIRONMENT_NAME"
 echo "Creating resource group: $AZURE_RESOURCE_GROUP"
@@ -20,6 +14,8 @@ az group create \
   --name "$AZURE_RESOURCE_GROUP" \
   --location "$AZURE_LOCATION" \
   --output table
+
+AZURE_SQL_ADMIN_PASSWORD="$("$SCRIPT_DIR/sql-password.sh" ensure)"
 
 echo ""
 echo "Ensuring Microsoft Entra app registration: $ENTRA_APP_DISPLAY_NAME"

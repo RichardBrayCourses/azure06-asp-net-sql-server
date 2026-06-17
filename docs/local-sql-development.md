@@ -41,16 +41,16 @@ dotnet ef database update \
 Use the Azure-specific command when you want to update the cloud database instead of local Docker SQL:
 
 ```bash
-AZURE_SQL_ADMIN_PASSWORD="<the-environment-sql-password>" DEPLOY_ENV=testing pnpm run backend:migrate:azure
+DEPLOY_ENV=testing pnpm run backend:migrate:azure
 ```
 
 Or use the environment shortcut:
 
 ```bash
-AZURE_SQL_ADMIN_PASSWORD="<the-environment-sql-password>" pnpm run testing:migrate:azure
+pnpm run testing:migrate:azure
 ```
 
-The Azure migration script reads the SQL server and database names from the environment deployment outputs, allows your current public IP through the SQL firewall, and passes an explicit Azure SQL connection string to EF Core.
+The Azure migration script reads the SQL password from Azure Key Vault, reads the SQL server and database names from the environment deployment outputs, allows your current public IP through the SQL firewall, and passes an explicit Azure SQL connection string to EF Core.
 
 ## Build And Test
 

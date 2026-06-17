@@ -35,13 +35,134 @@ These commands look similar, but they do different jobs.
 
 | Command family | Example                    | Meaning                                                        |
 | -------------- | -------------------------- | -------------------------------------------------------------- |
-| `whatif:*`     | `pnpm run whatif:testing`  | Ask Azure what infrastructure would change. This is a preview. |
-| `deploy:*`     | `pnpm run deploy:testing`  | Deploy directly from your terminal to Azure.                   |
+| `whatif:*`     | `pnpm run whatif:testing` | Ask Azure what infrastructure would change. This is a preview. |
+| `deploy:*`     | `pnpm run deploy:testing` | Deploy directly from your terminal to Azure.                   |
 | `release:*`    | `pnpm run release:testing` | Promote a Git branch and let GitHub Actions deploy.            |
 
 Normal course flow uses `release:*`.
 
 Manual troubleshooting or first Azure smoke tests can use `deploy:*`.
+
+## Deployment Lifecycle Cheat Sheet
+
+Use this section when you want the exact commands and do not want the background explanation.
+
+### Password Rule
+
+You do not normally choose or type the Azure SQL administrator password.
+
+On the first deployment for an environment, the deployment script creates an Azure Key Vault, generates a SQL administrator password, and saves it as a Key Vault secret:
+
+```text
+testing    -> allcheckouttest-kv/sql-admin-password
+staging    -> allcheckoutstage-kv/sql-admin-password
+production -> allcheckoutprod-kv/sql-admin-password
+```
+
+Later deployments reuse the same Key Vault secret. Migration commands also read the password from Key Vault.
+
+Only set `AZURE_SQL_ADMIN_PASSWORD` manually if you intentionally want to seed a specific password into Key Vault before the SQL server is created.
+
+### First-Time Local Deployment To An Environment
+
+Testing:
+
+```bash
+pnpm run deploy:testing
+pnpm run testing:migrate:azure
+```
+
+Staging:
+
+```bash
+pnpm run deploy:staging
+pnpm run staging:migrate:azure
+```
+
+Production:
+
+```bash
+pnpm run deploy:production
+pnpm run production:migrate:azure
+```
+
+The first command creates or updates the Azure infrastructure, including Key Vault and Azure SQL. The second command applies EF Core migrations and inserts the seed data.
+
+### Subsequent Local Deployments
+
+Run the same commands:
+
+```bash
+pnpm run deploy:testing
+pnpm run testing:migrate:azure
+```
+
+The deploy command reuses the existing Key Vault secret. Running migrations repeatedly is safe. EF Core only applies migrations that are not already recorded in the target database.
+
+### First-Time GitHub Actions Deployment
+
+Use the normal release commands:
+
+```bash
+pnpm run release:testing
+pnpm run testing:wait-for-deploy
+```
+
+GitHub Actions creates or reuses the Key Vault secret, runs the infrastructure deployment, and runs the Azure SQL migrations.
+
+### Subsequent GitHub Actions Deployments
+
+Keep using:
+
+```bash
+pnpm run release:testing
+pnpm run testing:wait-for-deploy
+```
+
+For staging and production, promote in order:
+
+```bash
+pnpm run release:staging
+pnpm run staging:wait-for-deploy
+
+pnpm run release:production
+pnpm run production:wait-for-deploy
+```
+
+No GitHub SQL password secret is needed. GitHub Actions uses Azure Key Vault.
+
+### Reset A Cloud Database Back To Seed Data
+
+This deletes all data in the selected environment database and recreates it from EF Core migrations and seed data.
+
+Testing reset:
+
+```bash
+SQL_SERVER_NAME=$(az deployment group show \
+  --resource-group all-checks-out-testing-rg \
+  --name all-checks-out-testing \
+  --query "properties.outputs.sqlServerName.value" \
+  --output tsv)
+
+SQL_DATABASE_NAME=$(az deployment group show \
+  --resource-group all-checks-out-testing-rg \
+  --name all-checks-out-testing \
+  --query "properties.outputs.sqlDatabaseName.value" \
+  --output tsv)
+
+az sql db delete \
+  --resource-group all-checks-out-testing-rg \
+  --server "$SQL_SERVER_NAME" \
+  --name "$SQL_DATABASE_NAME" \
+  --yes
+
+pnpm run deploy:testing
+pnpm run testing:migrate:azure
+```
+
+For staging, use `all-checks-out-staging-rg`, `all-checks-out-staging`, `deploy:staging`, and `staging:migrate:azure`.
+
+For production, use `all-checks-out-production-rg`, `all-checks-out-production`, `deploy:production`, and `production:migrate:azure`. Resetting production deletes production data.
 
 ## What Changes Where?
 
@@ -83,15 +204,15 @@ changes Azure testing only. It does not change staging, production, GitHub, or C
 | Install dependencies on your machine            | Once per machine, then again when dependencies change                                 | `pnpm install`                                                                                                      |
 | Initialise, repair, or publish course branches  | Once per copied repo, or whenever one of the four local or remote branches is missing | `pnpm run repo:init`                                                                                                |
 | Configure GitHub Actions access to Azure        | Once per GitHub repo, then again only if you need to replace the credential           | `REPO_PREFIX_CODE=azure06 APP_PREFIX="all-checks-out-$REPO_PREFIX_CODE-github-actions" pnpm run setup:github-azure` |
-| Configure the Azure SQL password secret         | Once per GitHub Environment                                                           | Add `AZURE_SQL_ADMIN_PASSWORD` to the `testing`, `staging`, and `production` GitHub Environments                    |
-| Deploy testing for the first time               | Once initially, then as needed                                                        | `pnpm run release:testing` or `pnpm run deploy:testing`                                                             |
+| Configure the Azure SQL password secret         | Automatic on first deploy                                                             | The deploy script creates an Azure Key Vault secret if it is missing                                                 |
+| Deploy testing for the first time               | Once initially, then as needed                                                        | `pnpm run release:testing` or `pnpm run deploy:testing`           |
 | Configure testing registered domain             | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Promote tested work into staging                | Many times                                                                            | `pnpm run release:staging`                                                                                          |
 | Configure staging registered domain             | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Promote approved work into production           | Many times, carefully                                                                 | `pnpm run release:production`                                                                                       |
 | Configure production registered domain          | Once, if it has not already been configured                                           | See [azure04-github-actions-phased-delivery/README.md](/Users/richardbray/src/azure04-github-actions-phased-delivery/README.md). |
 | Generate local frontend Entra config from Azure | Whenever you want to run the UI locally against an Azure environment                  | `DEPLOY_ENV=testing pnpm run shell:env`                                                                                |
-| Preview Azure infrastructure changes            | Whenever useful                                                                       | `pnpm run whatif:testing`                                                                                           |
+| Preview Azure infrastructure changes            | Whenever useful                                                                       | `pnpm run whatif:testing`                                         |
 | Remove an Azure environment                     | Rarely                                                                                | `pnpm run destroy:testing`                                                                                          |
 
 ## Full Journey: From Fresh Clone To Production
@@ -197,7 +318,7 @@ Run this from the Azure06 repository root:
 
 ```bash
 cd /Users/richardbray/src/azure06-asp-net-sql-server
-AZURE_SQL_ADMIN_PASSWORD="<choose-a-strong-password>" pnpm run deploy:testing
+pnpm run deploy:testing
 ```
 
 The correct Azure06 output includes:
@@ -221,7 +342,7 @@ If the output jumps straight from `infra:deploy` to `shell:build`, you are proba
 The deployment creates Azure SQL, but the ASP.NET Core API does not run EF Core migrations on startup. Apply migrations explicitly:
 
 ```bash
-AZURE_SQL_ADMIN_PASSWORD="<the-same-password>" pnpm run testing:migrate:azure
+pnpm run testing:migrate:azure
 ```
 
 This command reads the Azure SQL server and database names from the deployment outputs, temporarily allows your current public IP through the SQL firewall, and runs:
@@ -254,6 +375,7 @@ Run:
 
 ```bash
 pnpm run deploy:staging
+pnpm run staging:migrate:azure
 ```
 
 During this local deployment, `apps/shell/.env` and `apps/shell/.env.generated.staging` are generated on your machine before the local Vite build runs.
@@ -280,6 +402,7 @@ Run:
 
 ```bash
 pnpm run deploy:production
+pnpm run production:migrate:azure
 ```
 
 During this local deployment, `apps/shell/.env` and `apps/shell/.env.generated.production` are generated on your machine before the local Vite build runs.
@@ -395,6 +518,8 @@ You should see:
 ```text
 AZURE_CREDENTIALS
 ```
+
+No GitHub SQL password secret is needed. GitHub Actions uses Azure Key Vault to create or reuse the SQL password secret.
 
 ### 4b.4 Commit And Push Main
 
@@ -563,8 +688,13 @@ The local deployment alternative is:
 
 ```bash
 pnpm run deploy:testing
+pnpm run testing:migrate:azure
+
 pnpm run deploy:staging
+pnpm run staging:migrate:azure
+
 pnpm run deploy:production
+pnpm run production:migrate:azure
 ```
 
 Use local deployment when GitHub Actions is not ready yet, or when you deliberately want your terminal to deploy Azure directly.
@@ -672,6 +802,8 @@ That promotes a Git branch and pushes it to GitHub. GitHub Actions then runs the
 pnpm run deploy:testing
 ```
 
+In GitHub Actions, the deploy script creates or reuses the SQL password secret in Azure Key Vault.
+
 The deployment command expands into this chain:
 
 ```text
@@ -684,7 +816,15 @@ deploy:<environment>
   -> shell:url
 ```
 
-`infra:deploy` creates or updates the Azure infrastructure and the Entra app registration.
+After `deploy:<environment>`, GitHub Actions also runs the matching migration command:
+
+```text
+testing branch    -> pnpm run testing:migrate:azure
+staging branch    -> pnpm run staging:migrate:azure
+production branch -> pnpm run production:migrate:azure
+```
+
+`infra:deploy` creates or updates the Azure infrastructure, including Azure SQL, and the Entra app registration.
 
 `shell:env` reads Azure App Configuration and writes the Vite `.env` file.
 
@@ -802,6 +942,9 @@ It creates:
 
 - the Azure Storage account for Blob static website hosting
 - one Azure App Configuration store
+- one Azure SQL server
+- one Azure SQL database
+- SQL firewall rules for Azure services
 - App Configuration key-values that the UI build converts into Vite environment variables
 
 The Entra app registration is created by `scripts/deploy-infra.sh` before Bicep runs, because app registration management goes through Microsoft Graph rather than ordinary Bicep resource deployment in this lesson.
@@ -884,8 +1027,13 @@ az deployment group create \
     domainName="$AZURE_DOMAIN_NAME" \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
-    entraApiScope="$ENTRA_API_SCOPE"
+    entraApiScope="$ENTRA_API_SCOPE" \
+    sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
+    sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
+    sqlDatabaseName="$AZURE_SQL_DATABASE_NAME"
 ```
+
+Before this command runs, `scripts/deploy-infra.sh` calls `scripts/sql-password.sh ensure`. That helper creates the environment Key Vault if needed, creates `sql-admin-password` if it is missing, and returns the secret value for the Bicep SQL administrator password parameter.
 
 Bicep receives the generated client ID and tenant ID, then writes frontend build values into Azure App Configuration.
 
@@ -912,11 +1060,21 @@ param entraTenantId string
 param entraApiScope string = ''
 ```
 
+The Azure SQL parameters are also passed in by `scripts/deploy-infra.sh`:
+
+```bicep
+param sqlAdministratorLogin string = 'allchecksoutadmin'
+@secure()
+param sqlAdministratorPassword string
+param sqlDatabaseName string = 'AllChecksOut'
+```
+
 The template builds stable names:
 
 ```bicep
 var storageAccountName = take('${appName}${uniqueString(resourceGroup().id)}', 24)
 var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().id)}', 50)
+var sqlServerName = take('${appName}-sql-${uniqueString(resourceGroup().id)}', 63)
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)
 ```
 
@@ -990,6 +1148,10 @@ The final outputs let later scripts find the generated resources:
 ```bicep
 output storageAccountName string = websiteStorage.name
 output appConfigurationName string = appConfiguration.name
+output sqlServerName string = sqlServer.name
+output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
+output sqlDatabaseName string = sqlDatabase.name
+output sqlAdministratorLogin string = sqlAdministratorLogin
 ```
 
 The Bicep file creates the Azure resources. One extra infrastructure step is still done by `scripts/deploy-infra.sh` after the Bicep deployment: it enables Blob static website hosting on the storage account.
@@ -1189,13 +1351,25 @@ Then it chooses the deployment command from the branch name:
   if: github.ref_name == 'testing'
   run: pnpm run deploy:testing
 
+- name: Migrate testing database
+  if: github.ref_name == 'testing'
+  run: pnpm run testing:migrate:azure
+
 - name: Deploy staging
   if: github.ref_name == 'staging'
   run: pnpm run deploy:staging
 
+- name: Migrate staging database
+  if: github.ref_name == 'staging'
+  run: pnpm run staging:migrate:azure
+
 - name: Deploy production
   if: github.ref_name == 'production'
   run: pnpm run deploy:production
+
+- name: Migrate production database
+  if: github.ref_name == 'production'
+  run: pnpm run production:migrate:azure
 ```
 
 That keeps the rule simple:
@@ -1232,12 +1406,19 @@ The command performed these actions:
 2. Created or updated the testing Entra app registration.
 3. Set the testing SPA redirect URIs in Microsoft Graph.
 4. Deployed the Bicep template.
-5. Wrote the Entra build values into Azure App Configuration.
-6. Enabled Azure Storage static website hosting.
-7. Generated `apps/shell/.env` from Azure App Configuration.
-8. Built the UI on your machine.
-9. Uploaded the built UI files to Azure Storage.
-10. Printed the Azure static website URL and the intended public URL.
+5. Created or updated the testing Azure SQL server and database.
+6. Wrote the Entra build values into Azure App Configuration.
+7. Enabled Azure Storage static website hosting.
+8. Generated `apps/shell/.env` from Azure App Configuration.
+9. Built the UI on your machine.
+10. Uploaded the built UI files to Azure Storage.
+11. Printed the Azure static website URL and the intended public URL.
+
+The deploy command does not apply EF Core migrations by itself. Run this after local deploys:
+
+```bash
+pnpm run testing:migrate:azure
+```
 
 The public Cloudflare URL works only after the matching Cloudflare DNS record exists and the custom domain has been connected in Azure.
 
