@@ -1,6 +1,10 @@
 using AllChecksOut.Cases.Api.CurrentUser;
+using AllChecksOut.Cases.Api.Authentication;
+using AllChecksOut.Cases.Api.Data;
 using AllChecksOut.Cases.Api.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace AllChecksOut.Cases.Api.Endpoints;
 
@@ -10,6 +14,73 @@ public static class CasesApiEndpoints
     {
         app.MapGet("/", () => Results.Redirect("/health")).AllowAnonymous();
         app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+        app.MapGet("/api/demo/sign-in-options", async (
+            HttpContext httpContext,
+            [FromServices] IOptions<DemoSignInOptions> options,
+            [FromServices] AllChecksOutDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            if (!IsDemoSignInRequestAllowed(httpContext, options.Value))
+            {
+                return Results.Unauthorized();
+            }
+
+            var users = await db.UserAccounts.AsNoTracking()
+                .Where(user => user.Status == "ACTIVE")
+                .OrderBy(user => user.DisplayName)
+                .ToListAsync(cancellationToken);
+            var userIds = users.Select(user => user.Id).ToArray();
+
+            var authorityUsers = await db.AuthorityUsers.AsNoTracking()
+                .Where(membership => userIds.Contains(membership.UserAccountId))
+                .OrderBy(membership => membership.EntityId)
+                .ThenBy(membership => membership.UserAccountId)
+                .Select(membership => new DemoSignInMembershipDto(membership.Id, "authority", membership.EntityId, membership.UserAccountId))
+                .ToListAsync(cancellationToken);
+            var participantUsers = await db.ParticipantUsers.AsNoTracking()
+                .Where(membership => userIds.Contains(membership.UserAccountId))
+                .OrderBy(membership => membership.EntityId)
+                .ThenBy(membership => membership.UserAccountId)
+                .Select(membership => new DemoSignInMembershipDto(membership.Id, "participant", membership.EntityId, membership.UserAccountId))
+                .ToListAsync(cancellationToken);
+            var stakeholderUsers = await db.StakeholderUsers.AsNoTracking()
+                .Where(membership => userIds.Contains(membership.UserAccountId))
+                .OrderBy(membership => membership.EntityId)
+                .ThenBy(membership => membership.UserAccountId)
+                .Select(membership => new DemoSignInMembershipDto(membership.Id, "stakeholder", membership.EntityId, membership.UserAccountId))
+                .ToListAsync(cancellationToken);
+            var agentUsers = await db.AgentUsers.AsNoTracking()
+                .Where(membership => userIds.Contains(membership.UserAccountId))
+                .OrderBy(membership => membership.EntityId)
+                .ThenBy(membership => membership.UserAccountId)
+                .Select(membership => new DemoSignInMembershipDto(membership.Id, "agent", membership.EntityId, membership.UserAccountId))
+                .ToListAsync(cancellationToken);
+
+            var memberships = authorityUsers
+                .Concat(participantUsers)
+                .Concat(stakeholderUsers)
+                .Concat(agentUsers)
+                .ToArray();
+
+            var authorityIds = memberships
+                .Where(membership => membership.Type == "authority")
+                .Select(membership => membership.EntityId)
+                .Concat(await db.Participants.AsNoTracking().Where(participant => memberships.Where(membership => membership.Type == "participant").Select(membership => membership.EntityId).Contains(participant.Id)).Select(participant => participant.AuthorityId).ToListAsync(cancellationToken))
+                .Concat(await db.Stakeholders.AsNoTracking().Where(stakeholder => memberships.Where(membership => membership.Type == "stakeholder").Select(membership => membership.EntityId).Contains(stakeholder.Id)).Select(stakeholder => stakeholder.AuthorityId).ToListAsync(cancellationToken))
+                .Concat(await db.Agents.AsNoTracking().Where(agent => memberships.Where(membership => membership.Type == "agent").Select(membership => membership.EntityId).Contains(agent.Id)).Select(agent => agent.AuthorityId).ToListAsync(cancellationToken))
+                .Distinct()
+                .ToArray();
+
+            var optionsDto = new DemoSignInOptionsDto(
+                await db.Authorities.AsNoTracking().Where(authority => authorityIds.Contains(authority.Id)).OrderBy(authority => authority.Name).ToListAsync(cancellationToken),
+                await db.Participants.AsNoTracking().Where(participant => authorityIds.Contains(participant.AuthorityId)).OrderBy(participant => participant.DisplayName).ToListAsync(cancellationToken),
+                await db.Stakeholders.AsNoTracking().Where(stakeholder => authorityIds.Contains(stakeholder.AuthorityId)).OrderBy(stakeholder => stakeholder.DisplayName).ToListAsync(cancellationToken),
+                await db.Agents.AsNoTracking().Where(agent => authorityIds.Contains(agent.AuthorityId)).OrderBy(agent => agent.DisplayName).ToListAsync(cancellationToken),
+                users,
+                memberships);
+
+            return Results.Ok(optionsDto);
+        }).AllowAnonymous();
 
         app.MapGet("/api/me", async ([FromServices] ApplicationUserResolver resolver, CancellationToken cancellationToken) =>
             Results.Ok(await resolver.ResolveAsync(cancellationToken)));
@@ -146,5 +217,16 @@ public static class CasesApiEndpoints
             DomainDto.RequestForInformation(await domain.UpdateRequestForInformationStatusAsync(requestId, command, ct)));
 
         return app;
+    }
+
+    private static bool IsDemoSignInRequestAllowed(HttpContext httpContext, DemoSignInOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.Key))
+        {
+            return false;
+        }
+
+        return httpContext.Request.Headers.TryGetValue("X-Demo-SignIn-Key", out var keyValues) &&
+            string.Equals(keyValues.ToString(), options.Key, StringComparison.Ordinal);
     }
 }

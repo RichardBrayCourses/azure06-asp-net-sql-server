@@ -1,34 +1,32 @@
-# Entra Test Users With all-checks-out.com Domains
+# Entra Test Users With The Existing Tenant
 
 ## Purpose
 
-This document explains how to create demo sign-ins without Gmail, without Gmail `+` aliases, and without exposing a personal `onmicrosoft.com` tenant name.
+This document explains how to create demo sign-ins without Gmail and without Gmail `+` aliases.
 
-The plan is to use your real domain:
-
-```text
-all-checks-out.com
-```
-
-and create environment-specific Microsoft Entra sign-in domains:
+The plan is to use the existing Microsoft Entra tenant domain:
 
 ```text
-testing.all-checks-out.com
-staging.all-checks-out.com
-production.all-checks-out.com
+artyuptickgmail.onmicrosoft.com
 ```
 
 Then Jonathan Price can sign in as:
 
 ```text
-jonathan.price@testing.all-checks-out.com
+jonathan.price@artyuptickgmail.onmicrosoft.com
+```
+
+This does not change the website URL:
+
+```text
+https://testing.all-checks-out.com
 ```
 
 ## Terms
 
 A Microsoft Entra tenant is the Microsoft identity directory that contains the users who sign in to this application.
 
-A custom domain is a domain you own and add to Microsoft Entra so it can be used in usernames.
+An `onmicrosoft.com` domain is a Microsoft-managed domain that can be used for Microsoft Entra usernames.
 
 A user principal name is the username a Microsoft Entra user types when signing in.
 
@@ -36,58 +34,95 @@ An object ID is the stable unique ID that Microsoft Entra assigns to a user.
 
 The `EntraObjectId` column in the application database connects an application user, such as Jonathan Price, to a Microsoft Entra user.
 
-## Step 1: Add The Custom Domains To Microsoft Entra
+## Step 1: Verify The Existing Tenant Domain
+
+### Azure Portal
 
 Open this URL in your browser:
 
 ```text
-https://entra.microsoft.com
+https://portal.azure.com
 ```
 
-Use the search box at the top of the page to search for:
+Use the search box at the top to search for:
 
 ```text
-Domain names
+Microsoft Entra ID
 ```
 
-Open the result called `Domain names`.
+Open `Microsoft Entra ID`.
 
-Add these custom domains:
+On the overview page, read:
 
 ```text
-testing.all-checks-out.com
-staging.all-checks-out.com
-production.all-checks-out.com
+Primary domain
 ```
 
-For each domain, Microsoft Entra will show a DNS `TXT` record.
+For this project, the expected value is:
 
-Add that `TXT` record in Cloudflare for `all-checks-out.com`.
+```text
+artyuptickgmail.onmicrosoft.com
+```
 
-Return to Microsoft Entra and verify the domain.
+The same overview page also shows the tenant ID. For this project, it is:
 
-You do not need to buy TLS certificates for this. Microsoft only needs the DNS `TXT` record to prove that you control the domain.
+```text
+f9868488-77db-4814-89b8-73242cf9f108
+```
+
+### Command Line
+
+Run:
+
+```bash
+az login --tenant f9868488-77db-4814-89b8-73242cf9f108
+```
+
+When Azure CLI asks:
+
+```text
+Select a subscription and tenant (Type a number or Enter for no changes):
+```
+
+press Enter.
+
+Then run:
+
+```bash
+az rest --method GET --uri "https://graph.microsoft.com/v1.0/domains" --query "value[].id" --output table
+```
+
+The expected value is:
+
+```text
+artyuptickgmail.onmicrosoft.com
+```
 
 ## Step 2: Create The Test Users
 
 ### Automated Approach
 
-Run this from the repository root after signing in with Azure CLI:
+Run this from the repository root. If you already ran `az login` in Step 1, do not run it again.
 
-```bash
-az login
+Create this file:
+
+```text
+scripts/create-entra-test-users.sh
 ```
 
-Set the sign-in domain for the environment you want:
+with this content:
 
 ```bash
-SIGN_IN_DOMAIN="testing.all-checks-out.com"
-OUTPUT_FILE=".entra-test-users.testing.jsonl"
-```
+#!/usr/bin/env bash
 
-Then run this script in the same terminal:
+set -euo pipefail
 
-```bash
+SIGN_IN_DOMAIN="${SIGN_IN_DOMAIN:-artyuptickgmail.onmicrosoft.com}"
+OUTPUT_FILE="${OUTPUT_FILE:-tmp/entra-test-users/testing-users.jsonl}"
+OUTPUT_DIR="$(dirname "$OUTPUT_FILE")"
+
+mkdir -p "$OUTPUT_DIR"
+
 generate_password() {
   node -e "const crypto = require('crypto'); const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789#%+=_'; let value = 'Aco!'; for (const byte of crypto.randomBytes(28)) value += chars[byte % chars.length]; process.stdout.write(value);"
 }
@@ -144,21 +179,19 @@ create_user "user-nadia-cole" "Nadia Cole" "nadia.cole"
 echo "Saved user mapping to $OUTPUT_FILE"
 ```
 
-The output file contains the Microsoft Entra object IDs needed in Step 3. It may also contain temporary passwords, so keep it private.
-
-For staging, use:
+Run it:
 
 ```bash
-SIGN_IN_DOMAIN="staging.all-checks-out.com"
-OUTPUT_FILE=".entra-test-users.staging.jsonl"
+bash scripts/create-entra-test-users.sh
 ```
 
-For production, use:
+The output file is:
 
-```bash
-SIGN_IN_DOMAIN="production.all-checks-out.com"
-OUTPUT_FILE=".entra-test-users.production.jsonl"
+```text
+tmp/entra-test-users/testing-users.jsonl
 ```
+
+It contains the Microsoft Entra object IDs needed in Step 3. It may also contain temporary passwords, so keep it private. The `tmp/` folder is ignored by git.
 
 ### Manual Approach
 
@@ -178,10 +211,10 @@ Open the result called `Users`.
 
 Create one user for each test persona.
 
-For Jonathan Price in testing, use:
+For Jonathan Price, use:
 
 ```text
-User principal name: jonathan.price@testing.all-checks-out.com
+User principal name: jonathan.price@artyuptickgmail.onmicrosoft.com
 Display name: Jonathan Price
 Password: let Microsoft generate a temporary password
 Account enabled: yes
@@ -203,14 +236,182 @@ Those placeholder values work in automated tests, but they do not work with real
 
 Replace each placeholder `EntraObjectId` with the real Microsoft Entra object ID for that user.
 
-For Jonathan Price, the application database row should change from this:
+### Automated Approach
+
+Create this file:
+
+```text
+scripts/update-entra-object-ids.sh
+```
+
+with this content:
+
+```bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config.sh" "${1:-testing}"
+
+MAPPING_FILE="${2:-$MONOREPO_DIR/tmp/entra-test-users/$ENVIRONMENT_NAME-users.jsonl}"
+WORK_DIR="$MONOREPO_DIR/tmp/entra-test-users/db-update"
+
+if [[ ! -f "$MAPPING_FILE" ]]; then
+  echo "Mapping file not found: $MAPPING_FILE" >&2
+  exit 1
+fi
+
+SQL_SERVER_FQDN=$(az deployment group show \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$AZURE_DEPLOYMENT_NAME" \
+  --query "properties.outputs.sqlServerFullyQualifiedDomainName.value" \
+  --output tsv)
+
+SQL_SERVER_NAME=$(az deployment group show \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$AZURE_DEPLOYMENT_NAME" \
+  --query "properties.outputs.sqlServerName.value" \
+  --output tsv)
+
+SQL_DATABASE_NAME=$(az deployment group show \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$AZURE_DEPLOYMENT_NAME" \
+  --query "properties.outputs.sqlDatabaseName.value" \
+  --output tsv)
+
+if [[ -z "$SQL_SERVER_FQDN" || -z "$SQL_SERVER_NAME" || -z "$SQL_DATABASE_NAME" ]]; then
+  echo "Azure SQL deployment outputs were not found." >&2
+  echo "Run: pnpm run deploy:$ENVIRONMENT_NAME" >&2
+  exit 1
+fi
+
+if [[ "${AZURE_SQL_CONFIGURE_FIREWALL:-1}" == "1" ]]; then
+  CLIENT_IP=$(curl -fsS https://api.ipify.org)
+  echo "Allowing current client IP on Azure SQL firewall: $CLIENT_IP"
+  az sql server firewall-rule create \
+    --resource-group "$AZURE_RESOURCE_GROUP" \
+    --server "$SQL_SERVER_NAME" \
+    --name "AllowEntraObjectIdUpdateClient" \
+    --start-ip-address "$CLIENT_IP" \
+    --end-ip-address "$CLIENT_IP" \
+    --output none
+fi
+
+mkdir -p "$WORK_DIR"
+
+cat > "$WORK_DIR/UpdateEntraObjectIds.csproj" <<'PROJECT'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
+  </ItemGroup>
+</Project>
+PROJECT
+
+cat > "$WORK_DIR/Program.cs" <<'CS'
+using System.Text.Json;
+using Microsoft.Data.SqlClient;
+
+if (args.Length != 2)
+{
+    Console.Error.WriteLine("Usage: UpdateEntraObjectIds <connection-string> <mapping-file>");
+    return 1;
+}
+
+var connectionString = args[0];
+var mappingFile = args[1];
+
+await using var connection = new SqlConnection(connectionString);
+await connection.OpenAsync();
+
+var updated = 0;
+foreach (var line in File.ReadLines(mappingFile))
+{
+    if (string.IsNullOrWhiteSpace(line))
+    {
+        continue;
+    }
+
+    using var document = JsonDocument.Parse(line);
+    var root = document.RootElement;
+    var userAccountId = root.GetProperty("userAccountId").GetString();
+    var entraObjectId = root.GetProperty("entraObjectId").GetString();
+
+    if (string.IsNullOrWhiteSpace(userAccountId) || string.IsNullOrWhiteSpace(entraObjectId))
+    {
+        throw new InvalidOperationException("Each mapping row must include userAccountId and entraObjectId.");
+    }
+
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+        UPDATE [cases].[UserAccounts]
+        SET [EntraObjectId] = @entraObjectId,
+            [UpdatedAt] = SYSDATETIMEOFFSET()
+        WHERE [Id] = @userAccountId;
+        """;
+    command.Parameters.AddWithValue("@userAccountId", userAccountId);
+    command.Parameters.AddWithValue("@entraObjectId", entraObjectId);
+
+    var rowCount = await command.ExecuteNonQueryAsync();
+    if (rowCount != 1)
+    {
+        throw new InvalidOperationException($"Expected to update one row for {userAccountId}, but updated {rowCount}.");
+    }
+
+    updated++;
+}
+
+Console.WriteLine($"Updated {updated} user account Entra object IDs.");
+return 0;
+CS
+
+CONNECTION_STRING="Server=tcp:$SQL_SERVER_FQDN,1433;Initial Catalog=$SQL_DATABASE_NAME;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connect Timeout=60;ConnectRetryCount=3;ConnectRetryInterval=10;"
+
+dotnet run \
+  --project "$WORK_DIR/UpdateEntraObjectIds.csproj" \
+  -- "$CONNECTION_STRING" "$MAPPING_FILE"
+```
+
+Run it:
+
+```bash
+bash scripts/update-entra-object-ids.sh testing
+```
+
+The script reads:
+
+```text
+tmp/entra-test-users/testing-users.jsonl
+```
+
+and updates the testing Azure SQL database.
+
+### Manual Approach
+
+Open the testing Azure SQL database.
+
+For each row in:
+
+```text
+tmp/entra-test-users/testing-users.jsonl
+```
+
+copy the `entraObjectId` value into the matching `UserAccounts.EntraObjectId` column.
+
+For Jonathan Price, the database row changes from:
 
 ```text
 UserAccounts.Id: user-jonathan-price
 UserAccounts.EntraObjectId: entra-user-jonathan-price
 ```
 
-to this:
+to:
 
 ```text
 UserAccounts.Id: user-jonathan-price
@@ -230,7 +431,7 @@ https://testing.all-checks-out.com
 Sign in as:
 
 ```text
-jonathan.price@testing.all-checks-out.com
+jonathan.price@artyuptickgmail.onmicrosoft.com
 ```
 
 Use the temporary password from Microsoft Entra.
@@ -247,7 +448,7 @@ The application recognises the signed-in user as the matching seeded application
 
 ## What To Check If It Fails
 
-If Microsoft says the account does not exist, check that the user was created in the same Microsoft Entra tenant used by the testing application.
+If Microsoft says the account does not exist, check that the user exists in Microsoft Entra.
 
 If Microsoft accepts the login but the application does not recognise the user, check the `EntraObjectId` value in the application database.
 
@@ -255,9 +456,11 @@ If the application recognises the wrong user, check that the object ID was copie
 
 ## Short Version
 
-Add `testing.all-checks-out.com`, `staging.all-checks-out.com`, and `production.all-checks-out.com` as Microsoft Entra custom domains.
+Create real Microsoft Entra users under:
 
-Create real Microsoft Entra users under those domains.
+```text
+artyuptickgmail.onmicrosoft.com
+```
 
 Copy each user's Microsoft Entra object ID.
 

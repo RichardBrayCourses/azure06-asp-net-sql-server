@@ -6,6 +6,19 @@ namespace AllChecksOut.Cases.Api.Domain;
 public sealed record EntityUserCommand(string DisplayName, string Email);
 public sealed record UpdateUserEmailCommand(string Email);
 public sealed record RegisterUserAccountWithEntraCommand(string EntraObjectId);
+public sealed record DemoSignInOptionsDto(
+    IReadOnlyList<Authority> Authorities,
+    IReadOnlyList<Participant> Participants,
+    IReadOnlyList<Stakeholder> Stakeholders,
+    IReadOnlyList<Agent> Agents,
+    IReadOnlyList<UserAccount> Users,
+    IReadOnlyList<DemoSignInMembershipDto> Memberships);
+
+public sealed record DemoSignInMembershipDto(
+    string Id,
+    string Type,
+    string EntityId,
+    string UserAccountId);
 public sealed record UpdateAuthorityTerminologyCommand(JsonElement Labels);
 public sealed record CreateParticipantCommand(string AuthorityId, string DisplayName, EntityUserCommand? InitialUser);
 public sealed record CreateEntityCommand(string AuthorityId, string DisplayName);

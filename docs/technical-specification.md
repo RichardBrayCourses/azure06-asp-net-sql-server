@@ -2,6 +2,8 @@
 
 ## Target Azure Stack
 
+For a beginner-friendly walkthrough of the current and planned authentication flow, see [Authentication in Azure06: Beginner's Guide](./authentication-beginners-guide.md).
+
 | Area                   | Target technology                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------- |
 | Frontend               | React, TypeScript, Vite, Tailwind CSS, shadcn-style UI primitives                              |

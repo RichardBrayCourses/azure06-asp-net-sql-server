@@ -1,46 +1,69 @@
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, type UserRole } from "@/context/AuthContext";
 import {
-  type AuthenticatableUserMembership,
-  agents,
-  authorities,
-  getAccountContextsForUser,
-  getAuthorityTerminology,
-  getAuthenticatableUsersForEntity,
-  participants,
-  stakeholders,
+  defaultTerminologyLabels,
   terminologyLabel,
   terminologyTitle,
-  userIdentities,
+  type AccountContext,
+  type AuthorityDto,
+  type TerminologyLabels,
+  type UserAccountDto,
 } from "@/data/console";
+import {
+  loadDemoSignInOptions,
+  type DemoSignInMembershipDto,
+  type DemoSignInMembershipType,
+  type DemoSignInOptionsDto,
+} from "@/data/demoSignIn";
 import { useEffect, useMemo, useState } from "react";
 
-type PrimaryContextType = AuthenticatableUserMembership["entityType"];
+type PrimaryContextType = DemoSignInMembershipType;
 type EntityOption = {
   id: string;
   name: string;
   authorityName?: string;
 };
+type RuntimeAccountContext = Omit<AccountContext, "entityId" | "entityType" | "role"> & {
+  entityType: PrimaryContextType;
+  entityId: string;
+  role: UserRole;
+};
 
 export default function SignInPage() {
   const { login } = useAuth();
+  const [options, setOptions] = useState<DemoSignInOptionsDto | null>(null);
   const [selectedContextType, setSelectedContextType] = useState<PrimaryContextType | "">("");
   const [selectedEntityId, setSelectedEntityId] = useState("");
   const [signInError, setSignInError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setIsLoading(true);
+    loadDemoSignInOptions()
+      .then((nextOptions) => {
+        if (isCurrent) {
+          setOptions(nextOptions);
+          setSignInError(null);
+        }
+      })
+      .catch((caught: unknown) => {
+        if (isCurrent) {
+          setSignInError(caught instanceof Error ? caught.message : "Unable to load demo sign-in users.");
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
   const selectedMembership = selectedContextType && selectedEntityId
-    ? { entityType: selectedContextType, entityId: selectedEntityId } satisfies AuthenticatableUserMembership
+    ? { entityType: selectedContextType, entityId: selectedEntityId }
     : null;
-  const selectedAuthorityId = useMemo(() => {
-    if (!selectedContextType || !selectedEntityId) return undefined;
-    if (selectedContextType === "authority") return selectedEntityId;
-    if (selectedContextType === "participant") {
-      return participants.find((participant) => participant.id === selectedEntityId)?.authorityId;
-    }
-    if (selectedContextType === "stakeholder") {
-      return stakeholders.find((stakeholder) => stakeholder.id === selectedEntityId)?.authorityId;
-    }
-    return agents.find((agent) => agent.id === selectedEntityId)?.authorityId;
-  }, [selectedContextType, selectedEntityId]);
-  const terminology = getAuthorityTerminology(selectedAuthorityId ?? authorities[0]?.id);
+  const terminology = defaultTerminologyLabels;
   const contextTypeOptions: Array<{ value: PrimaryContextType; label: string }> = [
     { value: "authority", label: terminologyTitle(terminology, "authority") },
     { value: "participant", label: terminologyTitle(terminology, "participant") },
@@ -48,59 +71,63 @@ export default function SignInPage() {
     { value: "agent", label: terminologyTitle(terminology, "agent") },
   ];
   const entityOptions = useMemo<EntityOption[]>(() => {
+    if (!options) return [];
     if (selectedContextType === "authority") {
-      return authorities.map((authority) => ({ id: authority.id, name: authority.name }));
+      return options.authorities.map((authority) => ({ id: authority.id, name: authority.name }));
     }
     if (selectedContextType === "participant") {
-      return participants.map((participant) => ({
+      return options.participants.map((participant) => ({
         id: participant.id,
-        name: participant.name,
-        authorityName: authorities.find((authority) => authority.id === participant.authorityId)?.name,
+        name: participant.displayName,
+        authorityName: findAuthority(options.authorities, participant.authorityId)?.name,
       }));
     }
     if (selectedContextType === "stakeholder") {
-      return stakeholders.map((stakeholder) => ({
+      return options.stakeholders.map((stakeholder) => ({
         id: stakeholder.id,
-        name: stakeholder.name,
-        authorityName: authorities.find((authority) => authority.id === stakeholder.authorityId)?.name,
+        name: stakeholder.displayName,
+        authorityName: findAuthority(options.authorities, stakeholder.authorityId)?.name,
       }));
     }
     if (selectedContextType === "agent") {
-      return agents.map((agent) => ({
+      return options.agents.map((agent) => ({
         id: agent.id,
-        name: agent.name,
-        authorityName: authorities.find((authority) => authority.id === agent.authorityId)?.name,
+        name: agent.displayName,
+        authorityName: findAuthority(options.authorities, agent.authorityId)?.name,
       }));
     }
     return [];
-  }, [selectedContextType]);
+  }, [options, selectedContextType]);
+  const accountContexts = useMemo(() => options ? buildAccountContexts(options, terminology) : [], [options, terminology]);
   const filteredUsers = useMemo(() => {
-    if (!selectedMembership) return [];
+    if (!options || !selectedMembership) return [];
     const userIds = new Set(
-      getAuthenticatableUsersForEntity(selectedMembership).map((membership) => membership.id),
+      options.memberships
+        .filter((membership) => membership.type === selectedMembership.entityType && membership.entityId === selectedMembership.entityId)
+        .map((membership) => membership.userAccountId),
     );
-    return userIdentities.filter((identity) => userIds.has(identity.id));
-  }, [selectedMembership]);
+    return options.users.filter((identity) => userIds.has(identity.id));
+  }, [options, selectedMembership]);
 
   useEffect(() => {
     setSelectedEntityId("");
   }, [selectedContextType]);
 
-  async function submit(context: NonNullable<ReturnType<typeof getSelectedContextForUser>>) {
+  async function submit(context: RuntimeAccountContext) {
     setSignInError(null);
     try {
       await login({
-      authenticatableUserId: context.authenticatableUserId,
-      name: context.name,
-      email: context.email,
-      authorityId: context.authorityId,
-      role: context.role,
-      accountContextId: context.id,
-      accountContextType: context.entityType,
-      accountContextEntityId: context.entityId,
-      accountContextName: context.entityName,
-      participantId: context.participantId,
-      stakeholderId: context.stakeholderId,
+        authenticatableUserId: context.authenticatableUserId,
+        name: context.name,
+        email: context.email,
+        authorityId: context.authorityId,
+        role: context.role,
+        accountContextId: context.id,
+        accountContextType: context.entityType,
+        accountContextEntityId: context.entityId,
+        accountContextName: context.entityName,
+        participantId: context.participantId,
+        stakeholderId: context.stakeholderId,
       });
     } catch (caught) {
       setSignInError(caught instanceof Error ? caught.message : "Unable to start Entra sign in.");
@@ -109,8 +136,9 @@ export default function SignInPage() {
 
   function getSelectedContextForUser(userId: string) {
     if (!selectedMembership) return undefined;
-    return getAccountContextsForUser(userId).find(
+    return accountContexts.find(
       (context) =>
+        context.authenticatableUserId === userId &&
         context.entityType === selectedMembership.entityType &&
         context.entityId === selectedMembership.entityId,
     );
@@ -137,10 +165,11 @@ export default function SignInPage() {
                 id="context-type"
                 required
                 value={selectedContextType}
+                disabled={isLoading || !options}
                 onChange={(event) => setSelectedContextType(event.target.value as PrimaryContextType | "")}
-                className="h-10 w-full border border-[#0b0c0c] bg-white px-3 text-sm font-normal text-[#0b0c0c] outline-none focus:ring-2 focus:ring-[#ffdd00] dark:bg-background dark:text-foreground"
+                className="h-10 w-full border border-[#0b0c0c] bg-white px-3 text-sm font-normal text-[#0b0c0c] outline-none focus:ring-2 focus:ring-[#ffdd00] disabled:border-[#b1b4b6] disabled:bg-[#f3f2f1] disabled:text-[#505a5f] dark:bg-background dark:text-foreground"
               >
-                <option value="">Select account type</option>
+                <option value="">{isLoading ? "Loading users" : "Select account type"}</option>
                 {contextTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -159,7 +188,7 @@ export default function SignInPage() {
                 id="entity-id"
                 required
                 value={selectedEntityId}
-                disabled={!selectedContextType}
+                disabled={!selectedContextType || isLoading || !options}
                 onChange={(event) => setSelectedEntityId(event.target.value)}
                 className="h-10 w-full border border-[#0b0c0c] bg-white px-3 text-sm font-normal text-[#0b0c0c] outline-none focus:ring-2 focus:ring-[#ffdd00] disabled:border-[#b1b4b6] disabled:bg-[#f3f2f1] disabled:text-[#505a5f] dark:bg-background dark:text-foreground"
               >
@@ -188,7 +217,7 @@ export default function SignInPage() {
                   className="border border-[#b1b4b6] bg-white p-3 text-left hover:border-[#0b0c0c] disabled:pointer-events-none disabled:opacity-50 dark:bg-card"
                 >
                   <span className="block text-sm font-bold">
-                    {identity.name}
+                    {identity.displayName}
                   </span>
                   <span className="mt-1 block text-xs text-[#505a5f] dark:text-muted-foreground">
                     {identity.email}
@@ -197,7 +226,7 @@ export default function SignInPage() {
               );
             }) : (
               <div className="border border-dashed border-[#b1b4b6] p-4 text-sm text-[#505a5f] dark:text-muted-foreground">
-                Select an account type and account to show matching users.
+                {isLoading ? "Loading users." : "Select an account type and account to show matching users."}
               </div>
             )}
             {selectedMembership && filteredUsers.length === 0 && (
@@ -210,4 +239,87 @@ export default function SignInPage() {
       </div>
     </main>
   );
+}
+
+function buildAccountContexts(options: DemoSignInOptionsDto, terminology: TerminologyLabels): RuntimeAccountContext[] {
+  return options.memberships.flatMap((membership) => {
+    const user = findUser(options.users, membership.userAccountId);
+    if (!user) return [];
+    const role = roleForContext(membership.type);
+
+    if (membership.type === "authority") {
+      const authority = findAuthority(options.authorities, membership.entityId);
+      if (!authority) return [];
+      return [contextFromMembership(membership, user, role, authority.id, authority.name, authority.id, authority.name, null, null)];
+    }
+
+    if (membership.type === "participant") {
+      const participant = options.participants.find((item) => item.id === membership.entityId);
+      const authority = findAuthority(options.authorities, participant?.authorityId);
+      if (!participant || !authority) return [];
+      return [contextFromMembership(membership, user, role, authority.id, authority.name, participant.id, participant.displayName, participant.id, null)];
+    }
+
+    if (membership.type === "agent") {
+      const agent = options.agents.find((item) => item.id === membership.entityId);
+      const authority = findAuthority(options.authorities, agent?.authorityId);
+      if (!agent || !authority) return [];
+      return [contextFromMembership(membership, user, role, authority.id, authority.name, agent.id, agent.displayName, null, null)];
+    }
+
+    const stakeholder = options.stakeholders.find((item) => item.id === membership.entityId);
+    const authority = findAuthority(options.authorities, stakeholder?.authorityId);
+    if (!stakeholder || !authority) return [];
+    return [contextFromMembership(membership, user, role, authority.id, authority.name, stakeholder.id, stakeholder.displayName, null, stakeholder.id)];
+  }).map((context) => ({
+    ...context,
+    description: context.role === "authority-admin"
+      ? "Configure case templates, participants, stakeholders, and users."
+      : context.role === "participant"
+        ? "Complete cases, manage evidence, and control stakeholder access."
+        : context.role === "agent"
+          ? `Assist ${terminologyLabel(terminology, "participant", true)} where ${terminologyLabel(terminology, "agent")} access has been granted.`
+          : "Review participant case that has been granted to this stakeholder account.",
+  }));
+}
+
+function contextFromMembership(
+  membership: DemoSignInMembershipDto,
+  user: UserAccountDto,
+  role: UserRole,
+  authorityId: string,
+  authorityName: string,
+  entityId: string,
+  entityName: string,
+  participantId: string | null,
+  stakeholderId: string | null,
+): RuntimeAccountContext {
+  return {
+    id: `${user.id}:${membership.type}:${entityId}`,
+    authenticatableUserId: user.id,
+    name: user.displayName,
+    email: user.email,
+    authorityId,
+    authorityName,
+    role,
+    entityType: membership.type,
+    entityId,
+    entityName,
+    participantId,
+    stakeholderId,
+    description: "",
+  };
+}
+
+function roleForContext(entityType: PrimaryContextType): UserRole {
+  if (entityType === "authority") return "authority-admin";
+  return entityType;
+}
+
+function findAuthority(authorities: AuthorityDto[], authorityId: string | null | undefined) {
+  return authorities.find((authority) => authority.id === authorityId);
+}
+
+function findUser(users: UserAccountDto[], userAccountId: string) {
+  return users.find((user) => user.id === userAccountId && user.status === "ACTIVE");
 }

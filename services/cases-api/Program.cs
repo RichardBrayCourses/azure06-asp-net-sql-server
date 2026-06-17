@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<EntraJwtOptions>(builder.Configuration.GetSection(EntraJwtOptions.SectionName));
 builder.Services.Configure<CorsOptions>(builder.Configuration.GetSection(CorsOptions.SectionName));
+builder.Services.Configure<DemoSignInOptions>(builder.Configuration.GetSection(DemoSignInOptions.SectionName));
 
 builder.Services.AddDbContext<AllChecksOutDbContext>(options =>
 {

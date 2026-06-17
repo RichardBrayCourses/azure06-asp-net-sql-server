@@ -55,6 +55,31 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+export async function publicApiRequest<T>(path: string, options: ApiRequestOptions = {}) {
+  const headers = new Headers(options.headers);
+  if (options.body !== undefined && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(`${apiConfig.baseUrl}${path}`, {
+    ...options,
+    headers,
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+  });
+
+  if (!response.ok) {
+    const problem = await readProblem(response);
+    throw new ApiError(problemMessage(problem) ?? `API request failed with status ${response.status}.`, response.status, problem);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
 async function readProblem(response: Response) {
   const text = await response.text();
   if (!text) return null;

@@ -136,6 +136,7 @@ az deployment group create \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
     entraApiScope="$ENTRA_API_SCOPE" \
+    demoSignInKey="$DEMO_SIGN_IN_KEY" \
     sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
     sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
     sqlDatabaseName="$AZURE_SQL_DATABASE_NAME" \

@@ -15,6 +15,7 @@ obj/
 
 # Logs
 *.log
+tmp/
 
 # Local environment files
 .env
