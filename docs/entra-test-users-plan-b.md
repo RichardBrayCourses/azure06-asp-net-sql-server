@@ -1,71 +1,42 @@
-# Entra Test Users With onmicrosoft.com Accounts
+# Entra Test Users With all-checks-out.com Domains
 
 ## Purpose
 
-This document explains how to create test sign-ins for the testing system without using Gmail and without using Gmail `+` aliases.
+This document explains how to create demo sign-ins without Gmail, without Gmail `+` aliases, and without exposing a personal `onmicrosoft.com` tenant name.
 
-The plan is to create Microsoft Entra users inside your own Microsoft Entra tenant. These users will have sign-in names ending in your tenant's `onmicrosoft.com` domain.
-
-## Terms Used In This Document
-
-A Microsoft Entra tenant is the Microsoft identity directory that contains users, app registrations, and sign-in settings for this project.
-
-An `onmicrosoft.com` domain is the default domain that Microsoft gives to a Microsoft Entra tenant. It usually looks like this:
+The plan is to use your real domain:
 
 ```text
-yourtenant.onmicrosoft.com
+all-checks-out.com
 ```
 
-A user principal name is the username that a Microsoft Entra user types when signing in. It often looks like an email address. For these test users, it will look like this:
+and create environment-specific Microsoft Entra sign-in domains:
 
 ```text
-jonathan.price@yourtenant.onmicrosoft.com
+testing.all-checks-out.com
+staging.all-checks-out.com
+production.all-checks-out.com
 ```
 
-An object ID is the stable unique ID that Microsoft Entra assigns to a user. It is not the user's email address. It is usually a GUID, which is a long ID shaped like this:
+Then Jonathan Price can sign in as:
 
 ```text
-11111111-2222-3333-4444-555555555555
+jonathan.price@testing.all-checks-out.com
 ```
 
-The application database is the SQL database used by this project. It has a `UserAccounts` table. Each row in that table represents one application user, such as Jonathan Price.
+## Terms
 
-The `EntraObjectId` column is the column in the application database that connects an application user to a Microsoft Entra user. When someone signs in, Microsoft Entra sends the user's object ID to the application. The application then looks for a matching `EntraObjectId` value in the `UserAccounts` table.
+A Microsoft Entra tenant is the Microsoft identity directory that contains the users who sign in to this application.
 
-## Why Gmail Plus Aliases Do Not Help Here
+A custom domain is a domain you own and add to Microsoft Entra so it can be used in usernames.
 
-Gmail `+` aliases only change where email is delivered. For example, these two addresses can both deliver to the same Gmail inbox:
+A user principal name is the username a Microsoft Entra user types when signing in.
 
-```text
-arty.uptick@gmail.com
-arty.uptick+jonathan.price@gmail.com
-```
+An object ID is the stable unique ID that Microsoft Entra assigns to a user.
 
-Microsoft Entra login does not treat a Gmail `+` alias as a Microsoft Entra user. The alias can receive email, but it is not automatically a sign-in account.
+The `EntraObjectId` column in the application database connects an application user, such as Jonathan Price, to a Microsoft Entra user.
 
-For this project, the important value is the Microsoft Entra object ID, not the email address.
-
-## The Plan
-
-Create one Microsoft Entra user for each seeded application user.
-
-For example, the seeded application user Jonathan Price can become this Microsoft Entra user:
-
-```text
-jonathan.price@yourtenant.onmicrosoft.com
-```
-
-After the Microsoft Entra user is created, copy that user's object ID into the Jonathan Price row in the application database.
-
-When Jonathan signs in with:
-
-```text
-jonathan.price@yourtenant.onmicrosoft.com
-```
-
-Microsoft Entra sends Jonathan's object ID to the application. The application finds the `UserAccounts` row with the same `EntraObjectId`. Jonathan is then treated as the seeded Jonathan Price user.
-
-## Step 1: Find Your onmicrosoft.com Domain
+## Step 1: Add The Custom Domains To Microsoft Entra
 
 Open this URL in your browser:
 
@@ -81,19 +52,21 @@ Domain names
 
 Open the result called `Domain names`.
 
-Find the default domain ending in:
+Add these custom domains:
 
 ```text
-onmicrosoft.com
+testing.all-checks-out.com
+staging.all-checks-out.com
+production.all-checks-out.com
 ```
 
-Write it down. In the examples below, this document uses:
+For each domain, Microsoft Entra will show a DNS `TXT` record.
 
-```text
-yourtenant.onmicrosoft.com
-```
+Add that `TXT` record in Cloudflare for `all-checks-out.com`.
 
-Replace that example with your real domain.
+Return to Microsoft Entra and verify the domain.
+
+You do not need to buy TLS certificates for this. Microsoft only needs the DNS `TXT` record to prove that you control the domain.
 
 ## Step 2: Create The Test Users
 
@@ -105,12 +78,16 @@ Run this from the repository root after signing in with Azure CLI:
 az login
 ```
 
-Then run this script:
+Set the sign-in domain for the environment you want:
 
 ```bash
-TENANT_DOMAIN="artyuptickgmail.onmicrosoft.com"
+SIGN_IN_DOMAIN="testing.all-checks-out.com"
 OUTPUT_FILE=".entra-test-users.testing.jsonl"
+```
 
+Then run this script in the same terminal:
+
+```bash
 generate_password() {
   node -e "const crypto = require('crypto'); const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789#%+=_'; let value = 'Aco!'; for (const byte of crypto.randomBytes(28)) value += chars[byte % chars.length]; process.stdout.write(value);"
 }
@@ -119,7 +96,7 @@ create_user() {
   local user_account_id="$1"
   local display_name="$2"
   local user_name="$3"
-  local upn="$user_name@$TENANT_DOMAIN"
+  local upn="$user_name@$SIGN_IN_DOMAIN"
   local password
   local object_id
 
@@ -132,7 +109,7 @@ create_user() {
     object_id="$(az ad user create \
       --display-name "$display_name" \
       --user-principal-name "$upn" \
-      --mail-nickname "$user_name" \
+      --mail-nickname "${user_name//./-}" \
       --password "$password" \
       --force-change-password-next-sign-in true \
       --query "id" \
@@ -167,7 +144,21 @@ create_user "user-nadia-cole" "Nadia Cole" "nadia.cole"
 echo "Saved user mapping to $OUTPUT_FILE"
 ```
 
-The output file contains the Microsoft Entra object IDs needed in Step 4. It may also contain temporary passwords, so keep it private.
+The output file contains the Microsoft Entra object IDs needed in Step 3. It may also contain temporary passwords, so keep it private.
+
+For staging, use:
+
+```bash
+SIGN_IN_DOMAIN="staging.all-checks-out.com"
+OUTPUT_FILE=".entra-test-users.staging.jsonl"
+```
+
+For production, use:
+
+```bash
+SIGN_IN_DOMAIN="production.all-checks-out.com"
+OUTPUT_FILE=".entra-test-users.production.jsonl"
+```
 
 ### Manual Approach
 
@@ -177,18 +168,20 @@ Open this URL in your browser:
 https://entra.microsoft.com
 ```
 
-Go to:
+Use the search box at the top of the page to search for:
 
 ```text
-Identity -> Users -> All users -> New user -> Create new user
+Users
 ```
+
+Open the result called `Users`.
 
 Create one user for each test persona.
 
-For Jonathan Price, use values like these:
+For Jonathan Price in testing, use:
 
 ```text
-User principal name: jonathan.price@yourtenant.onmicrosoft.com
+User principal name: jonathan.price@testing.all-checks-out.com
 Display name: Jonathan Price
 Password: let Microsoft generate a temporary password
 Account enabled: yes
@@ -196,38 +189,7 @@ Account enabled: yes
 
 Repeat this for each seeded user.
 
-Use predictable names. For example:
-
-```text
-jonathan.price@yourtenant.onmicrosoft.com
-amara.singh@yourtenant.onmicrosoft.com
-aisha.khan@yourtenant.onmicrosoft.com
-michael.reeves@yourtenant.onmicrosoft.com
-```
-
-Keep a temporary note of each username and temporary password. Treat that note as sensitive, because anyone with those details can try to sign in as the test user.
-
-## Step 3: Copy Each User's Object ID
-
-For each Microsoft Entra user you created, open the user in the Microsoft Entra admin center.
-
-Find the field named:
-
-```text
-Object ID
-```
-
-Copy it.
-
-Create a small mapping table for yourself. It should look like this:
-
-```text
-Seeded application user | Sign-in username | Microsoft Entra object ID
-Jonathan Price | jonathan.price@yourtenant.onmicrosoft.com | 11111111-2222-3333-4444-555555555555
-Amara Singh | amara.singh@yourtenant.onmicrosoft.com | 66666666-7777-8888-9999-000000000000
-```
-
-## Step 4: Update The Application Database
+## Step 3: Update The Application Database
 
 The application database must use the real Microsoft Entra object IDs.
 
@@ -257,7 +219,7 @@ UserAccounts.EntraObjectId: 11111111-2222-3333-4444-555555555555
 
 Use Jonathan's real object ID, not the example value above.
 
-## Step 5: Sign In As A Test User
+## Step 4: Sign In As A Test User
 
 Open the testing site:
 
@@ -265,15 +227,15 @@ Open the testing site:
 https://testing.all-checks-out.com
 ```
 
-Sign in with one of the new Microsoft Entra usernames, such as:
+Sign in as:
 
 ```text
-jonathan.price@yourtenant.onmicrosoft.com
+jonathan.price@testing.all-checks-out.com
 ```
 
 Use the temporary password from Microsoft Entra.
 
-Microsoft may ask you to change the password on first sign-in. If it does, set a new password and record it somewhere safe.
+Microsoft may ask you to change the password on first sign-in.
 
 ## What Success Looks Like
 
@@ -283,28 +245,20 @@ The login returns to the testing site.
 
 The application recognises the signed-in user as the matching seeded application user.
 
-For Jonathan Price, the application should treat the signed-in user as:
-
-```text
-Jonathan Price
-```
-
 ## What To Check If It Fails
 
-If Microsoft says the account does not exist, check that the username was created in the same Microsoft Entra tenant used by the testing application.
+If Microsoft says the account does not exist, check that the user was created in the same Microsoft Entra tenant used by the testing application.
 
 If Microsoft accepts the login but the application does not recognise the user, check the `EntraObjectId` value in the application database.
 
 If the application recognises the wrong user, check that the object ID was copied into the correct `UserAccounts` row.
 
-If the user cannot access the expected application data, check that the seeded user's memberships are correct. A membership is the database record that connects a user to a role-like position in the application, such as authority user, participant user, stakeholder user, or agent user.
-
 ## Short Version
 
-Create real Microsoft Entra users ending in your tenant's `onmicrosoft.com` domain.
+Add `testing.all-checks-out.com`, `staging.all-checks-out.com`, and `production.all-checks-out.com` as Microsoft Entra custom domains.
+
+Create real Microsoft Entra users under those domains.
 
 Copy each user's Microsoft Entra object ID.
 
 Put each real object ID into the matching application database user row.
-
-Sign in with the new `onmicrosoft.com` username.
