@@ -51,6 +51,7 @@ export type RequestForInformationId = string;
 export type ParticipantSupplierId = string;
 
 type JsonObject = Record<string, unknown>;
+type MaybePromise<T> = T | Promise<T>;
 
 type BaseDto = {
   id: string;
@@ -1127,7 +1128,7 @@ export class InMemoryAllChecksOutDatabase {
     return this.userAccounts.map((account) => account.toDto());
   }
 
-  updateUserAccountEmail(userAccountId: UserAccountId, email: string) {
+  updateUserAccountEmail(userAccountId: UserAccountId, email: string): MaybePromise<UserAccountDto> {
     const existing = this.requireUserAccount(userAccountId);
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !normalizedEmail.includes("@")) {
@@ -1151,7 +1152,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated.toDto();
   }
 
-  registerUserAccountWithEntra(userAccountId: UserAccountId, entraObjectId: string) {
+  registerUserAccountWithEntra(userAccountId: UserAccountId, entraObjectId: string): MaybePromise<UserAccountDto> {
     const existing = this.requireUserAccount(userAccountId);
     const objectId = entraObjectId.trim();
     if (!objectId) {
@@ -1166,7 +1167,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated.toDto();
   }
 
-  updateAuthorityTerminology(command: UpdateAuthorityTerminologyCommand) {
+  updateAuthorityTerminology(command: UpdateAuthorityTerminologyCommand): MaybePromise<AuthorityTerminologyDto> {
     this.requireAuthority(command.authorityId);
     const timestamp = this.timestamp();
     const existing = this.getAuthorityTerminology(command.authorityId);
@@ -1302,7 +1303,7 @@ export class InMemoryAllChecksOutDatabase {
     return this.getMembershipUsers(this.authorityUsers, authorityId);
   }
 
-  createParticipant(command: CreateParticipantCommand) {
+  createParticipant(command: CreateParticipantCommand): MaybePromise<ParticipantDto> {
     this.requireAuthority(command.authorityId);
     const participant = new ParticipantEntity({
       ...this.createBase(this.nextId("participant", this.participants)),
@@ -1316,7 +1317,7 @@ export class InMemoryAllChecksOutDatabase {
     return participant.toDto();
   }
 
-  createParticipantUser(participantId: ParticipantId, command: CreateEntityUserCommand) {
+  createParticipantUser(participantId: ParticipantId, command: CreateEntityUserCommand): MaybePromise<{ userAccount: UserAccountDto; participantUser: MembershipDto }> {
     this.requireParticipant(participantId);
     const userAccount = this.createUserAccount(command.displayName, command.email);
     const membership = new ParticipantUserEntity({
@@ -1328,7 +1329,7 @@ export class InMemoryAllChecksOutDatabase {
     return { userAccount, participantUser: membership.toDto() };
   }
 
-  createAuthorityUser(authorityId: AuthorityId, command: CreateEntityUserCommand) {
+  createAuthorityUser(authorityId: AuthorityId, command: CreateEntityUserCommand): MaybePromise<{ userAccount: UserAccountDto; authorityUser: MembershipDto }> {
     this.requireAuthority(authorityId);
     const userAccount = this.createUserAccount(command.displayName, command.email);
     const membership = new AuthorityUserEntity({
@@ -1340,7 +1341,7 @@ export class InMemoryAllChecksOutDatabase {
     return { userAccount, authorityUser: membership.toDto() };
   }
 
-  createStakeholder(command: CreateStakeholderCommand) {
+  createStakeholder(command: CreateStakeholderCommand): MaybePromise<StakeholderDto> {
     this.requireAuthority(command.authorityId);
     const stakeholder = new StakeholderEntity({
       ...this.createBase(this.nextId("stakeholder", this.stakeholders)),
@@ -1351,7 +1352,7 @@ export class InMemoryAllChecksOutDatabase {
     return stakeholder.toDto();
   }
 
-  createStakeholderUser(stakeholderId: StakeholderId, command: CreateEntityUserCommand) {
+  createStakeholderUser(stakeholderId: StakeholderId, command: CreateEntityUserCommand): MaybePromise<{ userAccount: UserAccountDto; stakeholderUser: MembershipDto }> {
     this.requireStakeholder(stakeholderId);
     const userAccount = this.createUserAccount(command.displayName, command.email);
     const membership = new StakeholderUserEntity({
@@ -1363,7 +1364,7 @@ export class InMemoryAllChecksOutDatabase {
     return { userAccount, stakeholderUser: membership.toDto() };
   }
 
-  createAgent(command: CreateAgentCommand) {
+  createAgent(command: CreateAgentCommand): MaybePromise<AgentDto> {
     this.requireAuthority(command.authorityId);
     const agent = new AgentEntity({
       ...this.createBase(this.nextId("agent", this.agents)),
@@ -1374,7 +1375,7 @@ export class InMemoryAllChecksOutDatabase {
     return agent.toDto();
   }
 
-  createAgentUser(agentId: AgentId, command: CreateEntityUserCommand) {
+  createAgentUser(agentId: AgentId, command: CreateEntityUserCommand): MaybePromise<{ userAccount: UserAccountDto; agentUser: MembershipDto }> {
     this.requireAgent(agentId);
     const userAccount = this.createUserAccount(command.displayName, command.email);
     const membership = new AgentUserEntity({
@@ -1386,7 +1387,7 @@ export class InMemoryAllChecksOutDatabase {
     return { userAccount, agentUser: membership.toDto() };
   }
 
-  grantStakeholderAccess(command: GrantStakeholderAccessCommand) {
+  grantStakeholderAccess(command: GrantStakeholderAccessCommand): MaybePromise<StakeholderParticipantAccessDto> {
     const stakeholder = this.requireStakeholder(command.stakeholderId);
     const participant = this.requireParticipant(command.participantId);
     this.requireUserAccount(command.approvedByUserId);
@@ -1421,7 +1422,7 @@ export class InMemoryAllChecksOutDatabase {
     return access.toDto();
   }
 
-  createAccessGrant(command: CreateAccessGrantCommand) {
+  createAccessGrant(command: CreateAccessGrantCommand): MaybePromise<AccessGrantDto> {
     const authority = this.requireAuthority(command.authorityId);
     const participant = this.requireParticipant(command.participantId);
     this.requireUserAccount(command.createdByUserId);
@@ -1496,7 +1497,7 @@ export class InMemoryAllChecksOutDatabase {
     return grant.toDto();
   }
 
-  updateAccessGrantStatus(accessGrantId: AccessGrantId, status: AccessGrantStatus) {
+  updateAccessGrantStatus(accessGrantId: AccessGrantId, status: AccessGrantStatus): MaybePromise<AccessGrantDto> {
     const grant = this.accessGrants.find((item) => item.id === accessGrantId)?.toDto();
     if (!grant) throw new Error(`Access grant ${accessGrantId} was not found.`);
     const updated = { ...grant, status, updatedAt: this.timestamp() };
@@ -1504,7 +1505,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated;
   }
 
-  createParticipantSupplier(command: CreateParticipantSupplierCommand) {
+  createParticipantSupplier(command: CreateParticipantSupplierCommand): MaybePromise<ParticipantSupplierDto> {
     const authority = this.requireAuthority(command.authorityId);
     const participant = this.requireParticipant(command.participantId);
     if (participant.authorityId !== authority.id) {
@@ -1525,7 +1526,7 @@ export class InMemoryAllChecksOutDatabase {
     return relationship.toDto();
   }
 
-  linkParticipantSupplierToCase(participantSupplierId: ParticipantSupplierId, caseId: CaseRecordId) {
+  linkParticipantSupplierToCase(participantSupplierId: ParticipantSupplierId, caseId: CaseRecordId): MaybePromise<CaseDto> {
     const relationship = this.requireParticipantSupplier(participantSupplierId);
     const caseRecord = this.requireCase(caseId);
     if (caseRecord.authorityId !== relationship.authorityId || caseRecord.participantId !== relationship.participantId) {
@@ -1549,7 +1550,7 @@ export class InMemoryAllChecksOutDatabase {
     return linkedCase;
   }
 
-  unlinkParticipantSupplierFromCase(caseId: CaseRecordId) {
+  unlinkParticipantSupplierFromCase(caseId: CaseRecordId): MaybePromise<CaseDto> {
     const caseRecord = this.requireCase(caseId);
     if (!caseRecord.participantSupplierId) {
       return caseRecord;
@@ -1569,7 +1570,7 @@ export class InMemoryAllChecksOutDatabase {
       .find((review) => review.stakeholderId === stakeholderId && review.caseId === caseId) ?? null;
   }
 
-  upsertStakeholderReview(command: UpsertStakeholderReviewCommand) {
+  upsertStakeholderReview(command: UpsertStakeholderReviewCommand): MaybePromise<StakeholderReviewDto> {
     const stakeholder = this.requireStakeholder(command.stakeholderId);
     const caseRecord = this.requireCase(command.caseId);
     this.requireUserAccount(command.reviewedByUserId);
@@ -1616,7 +1617,7 @@ export class InMemoryAllChecksOutDatabase {
       .filter((request) => request.participantId === participantId);
   }
 
-  createRequestForInformation(command: CreateRequestForInformationCommand) {
+  createRequestForInformation(command: CreateRequestForInformationCommand): MaybePromise<RequestForInformationDto> {
     const stakeholder = this.requireStakeholder(command.stakeholderId);
     const caseRecord = this.requireCase(command.caseId);
     this.requireUserAccount(command.requestedByUserId);
@@ -1662,7 +1663,7 @@ export class InMemoryAllChecksOutDatabase {
     return request.toDto();
   }
 
-  respondToRequestForInformation(command: RespondToRequestForInformationCommand) {
+  respondToRequestForInformation(command: RespondToRequestForInformationCommand): MaybePromise<RequestForInformationDto> {
     const request = this.requireRequestForInformation(command.requestId);
     const respondent = this.requireUserAccount(command.respondedByUserId);
     const isParticipantUser = this.participantUsers.some((membership) => {
@@ -1709,7 +1710,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated;
   }
 
-  updateRequestForInformationStatus(command: UpdateRequestForInformationStatusCommand) {
+  updateRequestForInformationStatus(command: UpdateRequestForInformationStatusCommand): MaybePromise<RequestForInformationDto> {
     const request = this.requireRequestForInformation(command.requestId);
     this.requireUserAccount(command.updatedByUserId);
     const updatedAt = this.timestamp();
@@ -1726,7 +1727,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated;
   }
 
-  createCaseTemplate(command: CreateCaseTemplateCommand) {
+  createCaseTemplate(command: CreateCaseTemplateCommand): MaybePromise<CaseTemplateDto> {
     this.requireAuthority(command.authorityId);
     const template = new CaseTemplateEntity({
       ...this.createBase(this.nextId("template", this.caseTemplates)),
@@ -1739,7 +1740,7 @@ export class InMemoryAllChecksOutDatabase {
     return template.toDto();
   }
 
-  addTaskToTemplate(command: AddTaskToTemplateCommand) {
+  addTaskToTemplate(command: AddTaskToTemplateCommand): MaybePromise<TemplateTaskDto> {
     const template = this.requireCaseTemplate(command.caseTemplateId);
     if (template.status === "FINALIZED") {
       throw new Error("Finalized case templates cannot be edited.");
@@ -1773,7 +1774,7 @@ export class InMemoryAllChecksOutDatabase {
     return task.toDto();
   }
 
-  finalizeCaseTemplate(caseTemplateId: CaseTemplateId) {
+  finalizeCaseTemplate(caseTemplateId: CaseTemplateId): MaybePromise<CaseTemplateDto> {
     const template = this.requireCaseTemplate(caseTemplateId);
     if (template.status === "FINALIZED") {
       return template;
@@ -1788,7 +1789,7 @@ export class InMemoryAllChecksOutDatabase {
     return finalized;
   }
 
-  assignParticipantToTemplate(command: AssignParticipantToTemplateCommand) {
+  assignParticipantToTemplate(command: AssignParticipantToTemplateCommand): MaybePromise<CaseTemplateParticipantDto> {
     const template = this.requireCaseTemplate(command.caseTemplateId);
     if (template.status !== "FINALIZED") {
       throw new Error("Case templates must be finalized before participants can be assigned.");
@@ -1819,7 +1820,7 @@ export class InMemoryAllChecksOutDatabase {
     return assignment.toDto();
   }
 
-  completeTask(command: CompleteTaskCommand) {
+  completeTask(command: CompleteTaskCommand): MaybePromise<TaskDto> {
     const task = this.requireTask(command.taskId);
     if (task.status === "WITHDRAWN") {
       throw new Error("Withdrawn tasks cannot be completed.");
@@ -1832,7 +1833,7 @@ export class InMemoryAllChecksOutDatabase {
     });
   }
 
-  uploadEvidence(command: UploadEvidenceCommand) {
+  uploadEvidence(command: UploadEvidenceCommand): MaybePromise<TaskDto> {
     const task = this.requireTask(command.taskId);
     if (task.status === "WITHDRAWN") {
       throw new Error("Withdrawn tasks cannot receive evidence.");
@@ -1845,7 +1846,7 @@ export class InMemoryAllChecksOutDatabase {
     });
   }
 
-  submitTask(taskId: TaskId) {
+  submitTask(taskId: TaskId): MaybePromise<TaskDto> {
     const task = this.requireTask(taskId);
     if (task.status === "WITHDRAWN") {
       throw new Error("Withdrawn tasks cannot be submitted.");
@@ -1859,7 +1860,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated;
   }
 
-  submitCase(caseId: CaseRecordId) {
+  submitCase(caseId: CaseRecordId): MaybePromise<CaseDto> {
     const caseRecord = this.requireCase(caseId);
     if (caseRecord.status === "WITHDRAWN") {
       throw new Error("Withdrawn cases cannot be completed.");
@@ -1882,7 +1883,7 @@ export class InMemoryAllChecksOutDatabase {
     return submittedCase;
   }
 
-  reviewTask(taskId: TaskId, decision: "PASSED" | "FAILED") {
+  reviewTask(taskId: TaskId, decision: "PASSED" | "FAILED"): MaybePromise<TaskDto> {
     const task = this.requireTask(taskId);
     if (task.status === "WITHDRAWN") {
       throw new Error("Withdrawn tasks cannot be reviewed.");
@@ -1896,7 +1897,7 @@ export class InMemoryAllChecksOutDatabase {
     return updated;
   }
 
-  withdrawTemplateTask(templateTaskId: TemplateTaskId, withdrawnByUserId: UserAccountId, withdrawnReason: string) {
+  withdrawTemplateTask(templateTaskId: TemplateTaskId, withdrawnByUserId: UserAccountId, withdrawnReason: string): MaybePromise<TemplateTaskDto> {
     const templateTask = this.requireTemplateTask(templateTaskId);
     const template = this.requireCaseTemplate(templateTask.caseTemplateId);
     if (template.status === "FINALIZED") {
@@ -1934,7 +1935,7 @@ export class InMemoryAllChecksOutDatabase {
     return updatedTemplateTask;
   }
 
-  withdrawCase(caseId: CaseRecordId, withdrawnByUserId: UserAccountId, withdrawnReason: string) {
+  withdrawCase(caseId: CaseRecordId, withdrawnByUserId: UserAccountId, withdrawnReason: string): MaybePromise<CaseDto> {
     const caseRecord = this.requireCase(caseId);
     if (!withdrawnReason.trim()) {
       throw new Error("Enter a withdrawal reason.");
@@ -1956,7 +1957,7 @@ export class InMemoryAllChecksOutDatabase {
     return withdrawnCase;
   }
 
-  reinstateCase(caseId: CaseRecordId) {
+  reinstateCase(caseId: CaseRecordId): MaybePromise<CaseDto> {
     const caseRecord = this.requireCase(caseId);
     if (caseRecord.status !== "WITHDRAWN") {
       throw new Error("Only withdrawn cases can be reinstated.");
@@ -1974,7 +1975,7 @@ export class InMemoryAllChecksOutDatabase {
     return this.requireCase(caseId);
   }
 
-  deleteCaseTemplate(caseTemplateId: CaseTemplateId) {
+  deleteCaseTemplate(caseTemplateId: CaseTemplateId): MaybePromise<CaseTemplateDto> {
     const template = this.requireCaseTemplate(caseTemplateId);
     const hasAssignments = this.caseTemplateParticipants.some((assignment) => assignment.toDto().caseTemplateId === caseTemplateId);
     if (hasAssignments) {
@@ -2474,7 +2475,11 @@ export class InMemoryAllChecksOutDatabase {
 
 }
 
-export const db = new InMemoryAllChecksOutDatabase();
+export let db = new InMemoryAllChecksOutDatabase();
+
+export function setConsoleDatabase(nextDatabase: InMemoryAllChecksOutDatabase) {
+  db = nextDatabase;
+}
 
 export const consoleApps: ConsoleApp[] = [
   {

@@ -40,3 +40,36 @@ dotnet ef database update \
 pnpm run backend:build
 pnpm run backend:test
 ```
+
+## Run The API And Shell Together
+
+Stage 4 wires the shell to authenticated `cases-api` calls.
+
+Start SQL Server and apply migrations:
+
+```bash
+pnpm run sql:up
+pnpm run backend:migrate
+```
+
+Start the API:
+
+```bash
+dotnet run --project services/cases-api
+```
+
+Configure the shell API URL in `apps/shell/.env` if the API is not listening on the default:
+
+```text
+VITE_API_BASE_URL=http://localhost:5294
+VITE_ENTRA_API_SCOPE=api://<api-app-id-or-uri>/<scope-name>
+```
+
+Then run the shell:
+
+```bash
+pnpm run shell:dev
+```
+
+Protected shell API calls use `getEntraAccessToken()` and send `Authorization: Bearer <access-token>`.
+The sign-in selector still uses seeded local demo data before Entra has issued an API token.

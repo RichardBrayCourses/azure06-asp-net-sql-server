@@ -20,12 +20,12 @@ export default function SetEmailAddressesPage() {
       .join(", ");
   }
 
-  function save(userId: string) {
+  async function save(userId: string) {
     setMessage(null);
     setError(null);
     try {
-      const updated = db.updateUserAccountEmail(userId, emails[userId] ?? "");
-      refresh();
+      const updated = await db.updateUserAccountEmail(userId, emails[userId] ?? "");
+      await refresh();
       setEmails((current) => ({ ...current, [userId]: updated.email }));
       setMessage(`Updated ${updated.displayName}.`);
     } catch (caught) {

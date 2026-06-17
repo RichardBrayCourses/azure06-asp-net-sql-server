@@ -746,26 +746,26 @@ export function StakeholderCaseDetailPage() {
   const requests = getRequestsForCase(caseRecord.id, user);
   const openRequests = requests.filter((request) => request.status === "OPEN" || request.status === "IN_PROGRESS").length;
 
-  function saveStakeholderReview() {
+  async function saveStakeholderReview() {
     setReviewError(null);
     if (!user.stakeholderId || !user.authenticatableUserId) {
       setReviewError("No stakeholder context is selected for this session.");
       return;
     }
     try {
-      db.upsertStakeholderReview({
+      await db.upsertStakeholderReview({
         stakeholderId: user.stakeholderId,
         caseId: caseRecord?.id ?? "",
         note: reviewNote.trim(),
         reviewedByUserId: user.authenticatableUserId,
       });
-      refresh();
+      await refresh();
     } catch (caught) {
       setReviewError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "stakeholder")} review could not be saved.`);
     }
   }
 
-  function createRequestForInformation() {
+  async function createRequestForInformation() {
     setRequestError(null);
     if (!user.stakeholderId || !user.authenticatableUserId) {
       setRequestError("No stakeholder context is selected for this session.");
@@ -776,14 +776,14 @@ export function StakeholderCaseDetailPage() {
       return;
     }
     try {
-      db.createRequestForInformation({
+      await db.createRequestForInformation({
         stakeholderId: user.stakeholderId,
         caseId: caseRecord?.id ?? "",
         taskId: requestTaskId || null,
         requestText,
         requestedByUserId: user.authenticatableUserId,
       });
-      refresh();
+      await refresh();
       setRequestTaskId("");
       setRequestText("");
     } catch (caught) {
@@ -791,20 +791,20 @@ export function StakeholderCaseDetailPage() {
     }
   }
 
-  function updateRequestStatus(requestId: string, status: Extract<RequestForInformationStatus, "ACCEPTED" | "WITHDRAWN">) {
+  async function updateRequestStatus(requestId: string, status: Extract<RequestForInformationStatus, "ACCEPTED" | "WITHDRAWN">) {
     setRequestError(null);
     if (!user.authenticatableUserId) {
       setRequestError("No stakeholder user is selected for this session.");
       return;
     }
     try {
-      db.updateRequestForInformationStatus({
+      await db.updateRequestForInformationStatus({
         requestId,
         status,
         updatedByUserId: user.authenticatableUserId,
         note: status === "ACCEPTED" ? `${terminologyTitle(terminology, "stakeholder")} accepted ${terminologyLabel(terminology, "participant")} response` : `${terminologyTitle(terminology, "stakeholder")} withdrew request`,
       });
-      refresh();
+      await refresh();
     } catch (caught) {
       setRequestError(caught instanceof Error ? caught.message : "Request status could not be updated.");
     }
@@ -970,7 +970,7 @@ export function StakeholdersPage() {
   const terminology = getTerminologyForUser(user);
   const scopedStakeholders = getStakeholdersForAuthority(user.authorityId ?? undefined);
 
-  function createStakeholder() {
+  async function createStakeholder() {
     setError(null);
     if (!user.authorityId) {
       setError("No authority is selected for this session.");
@@ -981,11 +981,11 @@ export function StakeholdersPage() {
       return;
     }
     try {
-      const stakeholder = db.createStakeholder({
+      const stakeholder = await db.createStakeholder({
         authorityId: user.authorityId,
         displayName: displayName.trim(),
       });
-      refresh();
+      await refresh();
       setDisplayName("");
       setShowCreate(false);
       navigate(`/admin/stakeholders/${stakeholder.id}`);
@@ -1067,7 +1067,7 @@ export function StakeholderDetailPage() {
   );
   const accessibleParticipants = getScopedParticipants(user).filter((participant) => accessibleParticipantIds.has(participant.id));
 
-  function createStakeholderUser() {
+  async function createStakeholderUser() {
     setUserError(null);
     if (!newUserName.trim()) {
       setUserError("Enter a user name.");
@@ -1078,11 +1078,11 @@ export function StakeholderDetailPage() {
       return;
     }
     try {
-      db.createStakeholderUser(stakeholderRecord.id, {
+      await db.createStakeholderUser(stakeholderRecord.id, {
         displayName: newUserName.trim(),
         email: newUserEmail.trim(),
       });
-      refresh();
+      await refresh();
       setNewUserName("");
       setNewUserEmail("");
       setShowCreateUser(false);
@@ -1181,7 +1181,7 @@ export function CaseTemplatesPage() {
   const terminology = getTerminologyForUser(user);
   const scopedTemplates = getCaseTemplatesForAuthority(user.authorityId ?? undefined);
 
-  function createTemplate() {
+  async function createTemplate() {
     setError(null);
     if (!user.authorityId) {
       setError("No authority is selected for this session.");
@@ -1192,12 +1192,12 @@ export function CaseTemplatesPage() {
       return;
     }
     try {
-      const template = db.createCaseTemplate({
+      const template = await db.createCaseTemplate({
         authorityId: user.authorityId,
         name: name.trim(),
         description: description.trim() || "Reusable case template",
       });
-      refresh();
+      await refresh();
       setName("");
       setDescription("");
       setShowCreate(false);
@@ -1207,11 +1207,11 @@ export function CaseTemplatesPage() {
     }
   }
 
-  function deleteTemplate(templateId: string) {
+  async function deleteTemplate(templateId: string) {
     setError(null);
     try {
-      db.deleteCaseTemplate(templateId);
-      refresh();
+      await db.deleteCaseTemplate(templateId);
+      await refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Template could not be deleted.");
     }
@@ -1368,7 +1368,7 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
     return <Navigate to={`/admin/case-templates/${templateRecord.id}/edit`} replace />;
   }
 
-  function addTemplateTask() {
+  async function addTemplateTask() {
     setTaskError(null);
     if (!taskTypeId) {
       setTaskError(`Select a ${terminologyLabel(terminology, "task")} type.`);
@@ -1379,14 +1379,14 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
       return;
     }
     try {
-      db.addTaskToTemplate({
+      await db.addTaskToTemplate({
         caseTemplateId: templateRecord.id,
         taskTypeId,
         title: taskTitle.trim(),
         description: taskDescription.trim(),
         parametersJson: { due: taskDue.trim() || "No due date" },
       });
-      refresh();
+      await refresh();
       setTaskTypeId("");
       setTaskTitle("");
       setTaskDescription("");
@@ -1397,33 +1397,33 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
     }
   }
 
-  function finalizeTemplate() {
+  async function finalizeTemplate() {
     setFinalizeError(null);
     if (!window.confirm("Finalizing a template cannot be undone. Continue?")) return;
     try {
-      db.finalizeCaseTemplate(templateRecord.id);
-      refresh();
+      await db.finalizeCaseTemplate(templateRecord.id);
+      await refresh();
       setShowAddTask(false);
     } catch (caught) {
       setFinalizeError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "caseTemplate")} could not be finalized.`);
     }
   }
 
-  function removeTemplateTask(taskId: string) {
+  async function removeTemplateTask(taskId: string) {
     setTaskError(null);
     if (!user.authenticatableUserId) {
       setTaskError("No authority user is selected for this session.");
       return;
     }
     try {
-      db.withdrawTemplateTask(taskId, user.authenticatableUserId, "Removed before finalization.");
-      refresh();
+      await db.withdrawTemplateTask(taskId, user.authenticatableUserId, "Removed before finalization.");
+      await refresh();
     } catch (caught) {
       setTaskError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "task")} could not be removed.`);
     }
   }
 
-  function assignParticipant() {
+  async function assignParticipant() {
     setAssignmentError(null);
     if (!isFinalized) {
       setAssignmentError(`${terminologyTitle(terminology, "caseTemplate")} must be finalized before it can be assigned.`);
@@ -1434,12 +1434,12 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
       return;
     }
     try {
-      db.assignParticipantToTemplate({
+      await db.assignParticipantToTemplate({
         caseTemplateId: templateRecord.id,
         participantId,
         decidedByUserId: user.authenticatableUserId,
       });
-      refresh();
+      await refresh();
       setParticipantId("");
       setShowAssignParticipant(false);
     } catch (caught) {
@@ -1459,7 +1459,7 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
     setWithdrawError(null);
   }
 
-  function withdrawCase() {
+  async function withdrawCase() {
     setWithdrawError(null);
     if (!withdrawingCaseId) {
       setWithdrawError(`Select a ${terminologyLabel(terminology, "case")} to withdraw.`);
@@ -1474,29 +1474,29 @@ export function CaseTemplateDetailPage({ mode }: { mode?: "edit" | "assign" }) {
       return;
     }
     try {
-      db.withdrawCase(withdrawingCaseId, user.authenticatableUserId, withdrawReason.trim());
-      refresh();
+      await db.withdrawCase(withdrawingCaseId, user.authenticatableUserId, withdrawReason.trim());
+      await refresh();
       closeWithdrawCase();
     } catch (caught) {
       setWithdrawError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "case")} could not be withdrawn.`);
     }
   }
 
-  function reinstateCase(caseId: string) {
+  async function reinstateCase(caseId: string) {
     setWithdrawError(null);
     try {
-      db.reinstateCase(caseId);
-      refresh();
+      await db.reinstateCase(caseId);
+      await refresh();
     } catch (caught) {
       setWithdrawError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "case")} could not be reinstated.`);
     }
   }
 
-  function deleteTemplate() {
+  async function deleteTemplate() {
     setDeleteError(null);
     try {
-      db.deleteCaseTemplate(templateRecord.id);
-      refresh();
+      await db.deleteCaseTemplate(templateRecord.id);
+      await refresh();
       navigate("/admin/case-templates");
     } catch (caught) {
       setDeleteError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "caseTemplate")} could not be deleted.`);
@@ -1775,18 +1775,18 @@ export function ParametersPage() {
     }));
   }
 
-  function saveParameters() {
+  async function saveParameters() {
     setError(null);
     if (!user.authorityId) {
       setError("No authority context is selected.");
       return;
     }
     try {
-      db.updateAuthorityTerminology({
+      await db.updateAuthorityTerminology({
         authorityId: user.authorityId,
         labels,
       });
-      refresh();
+      await refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Parameters could not be saved.");
     }
@@ -1850,7 +1850,7 @@ export function ParticipantsPage() {
   const terminology = getTerminologyForUser(user);
   const scopedParticipants = getScopedParticipants(user);
 
-  function createParticipant() {
+  async function createParticipant() {
     setError(null);
     if (!user.authorityId) {
       setError("No authority is selected for this session.");
@@ -1869,7 +1869,7 @@ export function ParticipantsPage() {
       return;
     }
     try {
-      db.createParticipant({
+      await db.createParticipant({
         authorityId: user.authorityId,
         displayName: displayName.trim(),
         initialUser: {
@@ -1877,7 +1877,7 @@ export function ParticipantsPage() {
           email: initialUserEmail.trim(),
         },
       });
-      refresh();
+      await refresh();
       setDisplayName("");
       setInitialUserName("");
       setInitialUserEmail("");
@@ -2056,7 +2056,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
   const showCreateUserPanel = mode === "users" && showCreateUser && activeUsersTab !== "agent-organizations";
   const showCreateAgentOrganizationPanel = mode === "users" && showCreateUser && activeUsersTab === "agent-organizations";
 
-  function createUser() {
+  async function createUser() {
     setUserError(null);
     if (!userName.trim()) {
       setUserError("Enter a user name.");
@@ -2072,7 +2072,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
           setUserError("No participant is selected.");
           return;
         }
-        db.createParticipantUser(user.participantId, {
+        await db.createParticipantUser(user.participantId, {
           displayName: userName.trim(),
           email: userEmail.trim(),
         });
@@ -2083,7 +2083,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
         }
         const agent = agentOrganizationId
           ? getAgent(agentOrganizationId)
-          : db.createAgent({
+          : await db.createAgent({
               authorityId: user.authorityId,
               displayName: userName.trim(),
             });
@@ -2091,12 +2091,12 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
           setUserError(`Select a valid ${terminologyLabel(terminology, "agent")} organization.`);
           return;
         }
-        db.createAgentUser(agent.id, {
+        await db.createAgentUser(agent.id, {
           displayName: userName.trim(),
           email: userEmail.trim(),
         });
       }
-      refresh();
+      await refresh();
       setUserName("");
       setUserEmail("");
       setAgentOrganizationId("");
@@ -2106,7 +2106,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
     }
   }
 
-  function createAgentOrganization() {
+  async function createAgentOrganization() {
     setAgentOrganizationError(null);
     if (!user.authorityId) {
       setAgentOrganizationError("No authority is selected for this session.");
@@ -2117,11 +2117,11 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
       return;
     }
     try {
-      db.createAgent({
+      await db.createAgent({
         authorityId: user.authorityId,
         displayName: agentOrganizationName.trim(),
       });
-      refresh();
+      await refresh();
       setAgentOrganizationName("");
       setShowCreateUser(false);
     } catch (caught) {
@@ -2129,14 +2129,14 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
     }
   }
 
-  function createParticipantSupplier() {
+  async function createParticipantSupplier() {
     setSupplierError(null);
     if (!participant || !user.authorityId) {
       setSupplierError("No participant is selected.");
       return;
     }
     try {
-      db.createParticipantSupplier({
+      await db.createParticipantSupplier({
         authorityId: user.authorityId,
         participantId: participant.id,
         supplierName,
@@ -2144,7 +2144,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
         servicesProvided,
         dataExposure,
       });
-      refresh();
+      await refresh();
       setSupplierName("");
       setRelationshipType("");
       setServicesProvided("");
@@ -2167,7 +2167,7 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
     setSupplierLinkError(null);
   }
 
-  function linkSupplierToCase() {
+  async function linkSupplierToCase() {
     setSupplierLinkError(null);
     if (!linkingSupplierId) {
       setSupplierLinkError(`Select a ${terminologyLabel(terminology, "participantSupplier")}.`);
@@ -2178,23 +2178,23 @@ export function CaseManagementHome({ mode }: { mode: "cases" | "suppliers" | "us
       return;
     }
     try {
-      db.linkParticipantSupplierToCase(linkingSupplierId, supplierCaseId);
-      refresh();
+      await db.linkParticipantSupplierToCase(linkingSupplierId, supplierCaseId);
+      await refresh();
       closeLinkSupplier();
     } catch (caught) {
       setSupplierLinkError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "participantSupplier")} could not be linked to this ${terminologyLabel(terminology, "case")}.`);
     }
   }
 
-  function unlinkSupplierFromCase(caseId: string) {
+  async function unlinkSupplierFromCase(caseId: string) {
     setSupplierLinkError(null);
     if (!caseId) {
       setSupplierLinkError(`No linked ${terminologyLabel(terminology, "case")} was found.`);
       return;
     }
     try {
-      db.unlinkParticipantSupplierFromCase(caseId);
-      refresh();
+      await db.unlinkParticipantSupplierFromCase(caseId);
+      await refresh();
       closeLinkSupplier();
     } catch (caught) {
       setSupplierLinkError(caught instanceof Error ? caught.message : `${terminologyTitle(terminology, "participantSupplier")} could not be unlinked from this ${terminologyLabel(terminology, "case")}.`);
@@ -2534,14 +2534,14 @@ export function AccessGrantsPage() {
   const granteeTypeLabel = granteeType === "AGENT" ? agentLabel : stakeholderLabel;
   const granteeTypeTitle = granteeType === "AGENT" ? agentTitle : stakeholderTitle;
 
-  function createGrant() {
+  async function createGrant() {
     setError(null);
     if (!granteeEntityId) {
       setError(`Select a ${granteeTypeLabel}.`);
       return;
     }
     try {
-      db.createAccessGrant({
+      await db.createAccessGrant({
         authorityId: user.authorityId ?? "",
         participantId: participant?.id ?? "",
         granteeType,
@@ -2553,7 +2553,7 @@ export function AccessGrantsPage() {
         status,
         createdByUserId: user.authenticatableUserId ?? "",
       });
-      refresh();
+      await refresh();
       setGranteeEntityId("");
       setPermissionLevel("REQUEST_INFORMATION");
       setDataScopeType("PARTICIPANT");
@@ -2565,11 +2565,11 @@ export function AccessGrantsPage() {
     }
   }
 
-  function updateGrantStatus(accessGrantId: string, nextStatus: AccessGrantStatus) {
+  async function updateGrantStatus(accessGrantId: string, nextStatus: AccessGrantStatus) {
     setError(null);
     try {
-      db.updateAccessGrantStatus(accessGrantId, nextStatus);
-      refresh();
+      await db.updateAccessGrantStatus(accessGrantId, nextStatus);
+      await refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Access grant status could not be updated.");
     }
@@ -2743,11 +2743,11 @@ export function CaseDetailPage() {
     tasks.length > 0 &&
     tasks.every((task) => task.domainStatus === "SUBMITTED" || task.domainStatus === "PASSED" || task.domainStatus === "WITHDRAWN");
 
-  function submitCase() {
+  async function submitCase() {
     setSubmitError(null);
     try {
-      db.submitCase(currentCase.id);
-      refresh();
+      await db.submitCase(currentCase.id);
+      await refresh();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "The case could not be submitted.");
     }
@@ -2759,7 +2759,7 @@ export function CaseDetailPage() {
     setRequestError(null);
   }
 
-  function saveRequestResponse(status: Extract<RequestForInformationStatus, "IN_PROGRESS" | "ANSWERED">) {
+  async function saveRequestResponse(status: Extract<RequestForInformationStatus, "IN_PROGRESS" | "ANSWERED">) {
     setRequestError(null);
     if (!respondingRequestId) {
       setRequestError("Select a request to respond to.");
@@ -2770,13 +2770,13 @@ export function CaseDetailPage() {
       return;
     }
     try {
-      db.respondToRequestForInformation({
+      await db.respondToRequestForInformation({
         requestId: respondingRequestId,
         responseText: requestResponseText,
         respondedByUserId: user.authenticatableUserId,
         status,
       });
-      refresh();
+      await refresh();
       setRespondingRequestId(null);
       setRequestResponseText("");
     } catch (caught) {
@@ -2949,24 +2949,24 @@ export function TaskDetailPage() {
     (responseText.trim().length > 0 || task.evidenceFiles.length > 0);
   const statusText = task.domainStatus.replace("_", " ");
 
-  function saveResponse() {
+  async function saveResponse() {
     setError(null);
     try {
-      db.completeTask({
+      await db.completeTask({
         taskId: currentTask.id,
         responseJson: {
           summary: responseText.trim(),
           savedAt: new Date().toISOString(),
         },
       });
-      refresh();
+      await refresh();
       setIsEdited(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "The task response could not be saved.");
     }
   }
 
-  function uploadEvidence(files: FileList | null) {
+  async function uploadEvidence(files: FileList | null) {
     if (!files || files.length === 0) return;
     setError(null);
     const uploadedAt = new Date().toISOString();
@@ -2979,23 +2979,23 @@ export function TaskDetailPage() {
       })),
     ];
     try {
-      db.uploadEvidence({
+      await db.uploadEvidence({
         taskId: currentTask.id,
         evidenceJson: {
           files: nextFiles,
         },
       });
-      refresh();
+      await refresh();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : `${terminologyTitle(terminology, "evidence")} metadata could not be uploaded.`);
     }
   }
 
-  function submitTaskUpdate() {
+  async function submitTaskUpdate() {
     setError(null);
     try {
       if (isEdited) {
-        db.completeTask({
+        await db.completeTask({
           taskId: currentTask.id,
           responseJson: {
             summary: responseText.trim(),
@@ -3003,8 +3003,8 @@ export function TaskDetailPage() {
           },
         });
       }
-      db.submitTask(currentTask.id);
-      refresh();
+      await db.submitTask(currentTask.id);
+      await refresh();
       setIsEdited(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "The task could not be submitted.");
@@ -3017,7 +3017,7 @@ export function TaskDetailPage() {
     setRequestError(null);
   }
 
-  function saveRequestResponse(status: Extract<RequestForInformationStatus, "IN_PROGRESS" | "ANSWERED">) {
+  async function saveRequestResponse(status: Extract<RequestForInformationStatus, "IN_PROGRESS" | "ANSWERED">) {
     setRequestError(null);
     if (!respondingRequestId) {
       setRequestError("Select a request to respond to.");
@@ -3028,13 +3028,13 @@ export function TaskDetailPage() {
       return;
     }
     try {
-      db.respondToRequestForInformation({
+      await db.respondToRequestForInformation({
         requestId: respondingRequestId,
         responseText: requestResponseText,
         respondedByUserId: user.authenticatableUserId,
         status,
       });
-      refresh();
+      await refresh();
       setRespondingRequestId(null);
       setRequestResponseText("");
     } catch (caught) {
@@ -3246,7 +3246,7 @@ export function AdminReferencePage() {
     users: "Users",
   };
 
-  function createAuthorityUser() {
+  async function createAuthorityUser() {
     setUserError(null);
     if (!authorityId) {
       setUserError("No authority is selected for this session.");
@@ -3261,11 +3261,11 @@ export function AdminReferencePage() {
       return;
     }
     try {
-      db.createAuthorityUser(authorityId, {
+      await db.createAuthorityUser(authorityId, {
         displayName: newUserName.trim(),
         email: newUserEmail.trim(),
       });
-      refresh();
+      await refresh();
       setNewUserName("");
       setNewUserEmail("");
       setShowCreateUser(false);

@@ -16,9 +16,13 @@ export default function EntraCallbackPage() {
     handled.current = true;
 
     completeEntraSignIn()
-      .then(({ selection, identity }) => {
-        db.registerUserAccountWithEntra(selection.authenticatableUserId, identity.objectId);
-        refresh();
+      .then(async ({ selection, identity }) => {
+        try {
+          await db.registerUserAccountWithEntra(selection.authenticatableUserId, identity.objectId);
+        } catch {
+          // First-time demo sign-in can reach this before the API user is linked.
+        }
+        await refresh();
         navigate(getDefaultConsolePath(selection.role), { replace: true });
       })
       .catch((caught: unknown) => {
