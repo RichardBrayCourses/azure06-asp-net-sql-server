@@ -143,21 +143,21 @@ Release testing:
 
 ```bash
 pnpm run release:testing
-pnpm run testing:wait-for-deploy
+pnpm run wait-for-deploy:testing
 ```
 
 Promote to staging:
 
 ```bash
 pnpm run release:staging
-pnpm run staging:wait-for-deploy
+pnpm run wait-for-deploy:staging
 ```
 
 Promote to production:
 
 ```bash
 pnpm run release:production
-pnpm run production:wait-for-deploy
+pnpm run wait-for-deploy:production
 ```
 
 GitHub Actions runs `deploy:<environment>` and then `database:update:<environment>`. The Azure login service principal becomes the SQL Microsoft Entra admin during deployment, and the database update authenticates with that same identity. No GitHub SQL password secret is required.
@@ -217,24 +217,24 @@ Run:
 ```bash
 pnpm run destroy:testing
 pnpm run deploy:testing
-pnpm run testing:get-storage-account
+pnpm run get-storage-account:testing
 ```
 
-`Copy the CNAME target printed by testing:get-storage-account.`
+`Copy the CNAME target printed by get-storage-account:testing.`
 
 `Create or update this Cloudflare DNS record.`
 
 ```text
 Type: CNAME
 Name: testing
-Target: the value printed by pnpm run testing:get-storage-account
+Target: the value printed by pnpm run get-storage-account:testing
 Proxy status: DNS only while connecting the domain
 ```
 
 `After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
-pnpm run testing:connect-domain
+pnpm run connect-domain:testing
 pnpm run database:update:testing
 ```
 
@@ -261,24 +261,24 @@ Run:
 ```bash
 pnpm run destroy:staging
 pnpm run deploy:staging
-pnpm run staging:get-storage-account
+pnpm run get-storage-account:staging
 ```
 
-`Copy the CNAME target printed by staging:get-storage-account.`
+`Copy the CNAME target printed by get-storage-account:staging.`
 
 `Create or update this Cloudflare DNS record.`
 
 ```text
 Type: CNAME
 Name: staging
-Target: the value printed by pnpm run staging:get-storage-account
+Target: the value printed by pnpm run get-storage-account:staging
 Proxy status: DNS only while connecting the domain
 ```
 
 `After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
-pnpm run staging:connect-domain
+pnpm run connect-domain:staging
 pnpm run database:update:staging
 ```
 
@@ -318,24 +318,24 @@ DELETE-PRODUCTION
 
 ```bash
 pnpm run deploy:production
-pnpm run production:get-storage-account
+pnpm run get-storage-account:production
 ```
 
-`Copy the CNAME target printed by production:get-storage-account.`
+`Copy the CNAME target printed by get-storage-account:production.`
 
 `Create or update this Cloudflare DNS record.`
 
 ```text
 Type: CNAME
 Name: www
-Target: the value printed by pnpm run production:get-storage-account
+Target: the value printed by pnpm run get-storage-account:production
 Proxy status: DNS only while connecting the domain
 ```
 
 `After the DNS record is visible, connect the custom domain in Azure Storage and update the database.`
 
 ```bash
-pnpm run production:connect-domain
+pnpm run connect-domain:production
 pnpm run database:update:production
 ```
 
@@ -365,7 +365,7 @@ If you are still actively reshaping the first EF model and deliberately want to 
 pnpm run destroy:testing
 pnpm run database:source:reset
 pnpm run deploy:testing
-pnpm run testing:get-storage-account
+pnpm run get-storage-account:testing
 ```
 
 `Update the Cloudflare CNAME testing record to the printed target.`
@@ -373,7 +373,7 @@ pnpm run testing:get-storage-account
 `Connect the custom domain and update the database.`
 
 ```bash
-pnpm run testing:connect-domain
+pnpm run connect-domain:testing
 pnpm run database:update:testing
 ```
 
@@ -396,14 +396,14 @@ The environment DNS records are:
 `For each environment, get the current Azure Storage static website target.`
 
 ```bash
-pnpm run testing:get-storage-account
-pnpm run staging:get-storage-account
-pnpm run production:get-storage-account
+pnpm run get-storage-account:testing
+pnpm run get-storage-account:staging
+pnpm run get-storage-account:production
 ```
 
 `Use the printed value as the Cloudflare CNAME target for that environment.`
 
-`Set the Cloudflare record to DNS only while running *:connect-domain.`
+`Set the Cloudflare record to DNS only while running connect-domain:<environment>.`
 
 `Switch the Cloudflare record back to Proxied after Azure accepts the custom domain.`
 

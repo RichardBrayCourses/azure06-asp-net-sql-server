@@ -26,10 +26,10 @@ if ! STORAGE_ACCOUNT_NAME=$(az deployment group show \
   echo "Resource group: $AZURE_RESOURCE_GROUP"
   echo ""
   echo "If you just ran pnpm run release:$ENVIRONMENT_NAME, wait for GitHub Actions to finish:"
-  echo "pnpm run $ENVIRONMENT_NAME:wait-for-deploy"
+  echo "pnpm run wait-for-deploy:$ENVIRONMENT_NAME"
   echo ""
   echo "Then retry:"
-  echo "pnpm run $ENVIRONMENT_NAME:get-storage-account"
+  echo "pnpm run get-storage-account:$ENVIRONMENT_NAME"
   echo ""
   exit 1
 fi

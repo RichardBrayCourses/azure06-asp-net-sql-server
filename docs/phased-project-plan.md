@@ -171,7 +171,6 @@ All future functionality should assume authenticated users.
 - [ ] Replace existing persistence mechanism
 - [ ] Implement repository pattern where appropriate
 - [ ] Add integration tests
-- [ ] Add local SQL development environment
 - [ ] Configure database settings for testing, staging and production
 
 ## Notes

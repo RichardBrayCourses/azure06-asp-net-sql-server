@@ -7,8 +7,13 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AllChecksO
 {
     public AllChecksOutDbContext CreateDbContext(string[] args)
     {
+        var connectionString =
+            Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTION_STRING")
+            ?? Environment.GetEnvironmentVariable("ConnectionStrings__AllChecksOut")
+            ?? "Server=tcp:placeholder.database.windows.net,1433;Initial Catalog=AllChecksOut;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;";
+
         var options = new DbContextOptionsBuilder<AllChecksOutDbContext>()
-            .UseSqlServer("Server=localhost,1433;Database=AllChecksOut;User Id=sa;Password=AllChecksOut_2026!;TrustServerCertificate=True;Encrypt=False")
+            .UseSqlServer(connectionString)
             .Options;
 
         return new AllChecksOutDbContext(options);
