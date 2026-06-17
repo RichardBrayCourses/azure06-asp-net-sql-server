@@ -28,10 +28,6 @@ ensure_initial_migration() {
 ensure_initial_migration
 
 if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
-  if [[ -z "${AZURE_SQL_ADMIN_PASSWORD:-}" ]]; then
-    AZURE_SQL_ADMIN_PASSWORD="$("$SCRIPT_DIR/sql-password.sh" get)"
-  fi
-
   SQL_SERVER_FQDN=$(az deployment group show \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --name "$AZURE_DEPLOYMENT_NAME" \
@@ -44,34 +40,19 @@ if [[ -z "${AZURE_SQL_CONNECTION_STRING:-}" ]]; then
     --query "properties.outputs.sqlDatabaseName.value" \
     --output tsv)
 
-  SQL_ADMIN_LOGIN=$(az deployment group show \
-    --resource-group "$AZURE_RESOURCE_GROUP" \
-    --name "$AZURE_DEPLOYMENT_NAME" \
-    --query "properties.outputs.sqlAdministratorLogin.value" \
-    --output tsv)
-
   SQL_SERVER_NAME=$(az deployment group show \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --name "$AZURE_DEPLOYMENT_NAME" \
     --query "properties.outputs.sqlServerName.value" \
     --output tsv)
 
-  if [[ -z "$SQL_SERVER_FQDN" || -z "$SQL_DATABASE_NAME" || -z "$SQL_ADMIN_LOGIN" || -z "$SQL_SERVER_NAME" ]]; then
+  if [[ -z "$SQL_SERVER_FQDN" || -z "$SQL_DATABASE_NAME" || -z "$SQL_SERVER_NAME" ]]; then
     echo "Azure SQL deployment outputs were not found."
     echo "Run: DEPLOY_ENV=$AZURE_ENVIRONMENT pnpm run infra:deploy"
     exit 1
   fi
 
-  if [[ "${AZURE_SQL_SYNC_ADMIN_PASSWORD:-1}" == "1" ]]; then
-    echo "Syncing Azure SQL admin password from Key Vault secret."
-    az sql server update \
-      --resource-group "$AZURE_RESOURCE_GROUP" \
-      --name "$SQL_SERVER_NAME" \
-      --admin-password "$AZURE_SQL_ADMIN_PASSWORD" \
-      --output none
-  fi
-
-  AZURE_SQL_CONNECTION_STRING="Server=tcp:$SQL_SERVER_FQDN,1433;Initial Catalog=$SQL_DATABASE_NAME;User ID=$SQL_ADMIN_LOGIN;Password=$AZURE_SQL_ADMIN_PASSWORD;Encrypt=True;TrustServerCertificate=False;Connect Timeout=60;ConnectRetryCount=3;ConnectRetryInterval=10;"
+  AZURE_SQL_CONNECTION_STRING="Server=tcp:$SQL_SERVER_FQDN,1433;Initial Catalog=$SQL_DATABASE_NAME;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connect Timeout=60;ConnectRetryCount=3;ConnectRetryInterval=10;"
 fi
 
 if [[ "${AZURE_SQL_CONFIGURE_FIREWALL:-1}" == "1" ]]; then

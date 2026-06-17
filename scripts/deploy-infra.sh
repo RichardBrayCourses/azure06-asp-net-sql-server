@@ -5,6 +5,72 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
+generate_password() {
+  node -e "const crypto = require('crypto'); const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#%+=_'; let value = ''; for (const byte of crypto.randomBytes(32)) value += chars[byte % chars.length]; process.stdout.write(value);"
+}
+
+current_principal_json() {
+  local account_type
+  local account_name
+
+  account_type="$(az account show --query "user.type" --output tsv)"
+  account_name="$(az account show --query "user.name" --output tsv)"
+
+  if [[ "$account_type" == "servicePrincipal" ]]; then
+    node -e "process.stdout.write(JSON.stringify({ displayName: process.argv[1], sid: process.argv[1], type: 'Application' }));" "$account_name"
+  else
+    az ad signed-in-user show \
+      --query "{displayName:userPrincipalName,sid:id,type:'User'}" \
+      --output json 2>/dev/null \
+      || az ad user show \
+        --id "$account_name" \
+        --query "{displayName:userPrincipalName,sid:id,type:'User'}" \
+        --output json
+  fi
+}
+
+ensure_sql_entra_admin() {
+  local sql_server_name="$1"
+  local principal_json="$2"
+  local principal_display_name
+  local principal_sid
+  local existing_admin_sid
+
+  principal_display_name="$(node -e "const value = JSON.parse(process.argv[1]); process.stdout.write(value.displayName || value.sid);" "$principal_json")"
+  principal_sid="$(node -e "const value = JSON.parse(process.argv[1]); process.stdout.write(value.sid || '');" "$principal_json")"
+
+  if [[ -z "$principal_sid" ]]; then
+    echo "Could not determine the current Azure principal for SQL Microsoft Entra admin setup." >&2
+    exit 1
+  fi
+
+  existing_admin_sid="$(az sql server ad-admin list \
+    --resource-group "$AZURE_RESOURCE_GROUP" \
+    --server "$sql_server_name" \
+    --query "[0].sid" \
+    --output tsv)"
+
+  echo ""
+  echo "Setting Azure SQL Microsoft Entra admin: $principal_display_name"
+  echo ""
+
+  if [[ -n "$existing_admin_sid" ]]; then
+    az sql server ad-admin update \
+      --resource-group "$AZURE_RESOURCE_GROUP" \
+      --server "$sql_server_name" \
+      --display-name "$principal_display_name" \
+      --object-id "$principal_sid" \
+      --output none
+  else
+    az sql server ad-admin create \
+      --resource-group "$AZURE_RESOURCE_GROUP" \
+      --server "$sql_server_name" \
+      --display-name "$principal_display_name" \
+      --object-id "$principal_sid" \
+      --output none
+  fi
+}
+
 echo ""
 echo "Deploying infrastructure for environment: $ENVIRONMENT_NAME"
 echo "Creating resource group: $AZURE_RESOURCE_GROUP"
@@ -15,7 +81,7 @@ az group create \
   --location "$AZURE_LOCATION" \
   --output table
 
-AZURE_SQL_ADMIN_PASSWORD="$("$SCRIPT_DIR/sql-password.sh" ensure)"
+AZURE_SQL_ADMIN_PASSWORD="$(generate_password)"
 
 echo ""
 echo "Ensuring Microsoft Entra app registration: $ENTRA_APP_DISPLAY_NAME"
@@ -74,6 +140,14 @@ az deployment group create \
     sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
     sqlDatabaseName="$AZURE_SQL_DATABASE_NAME" \
   --output table
+
+SQL_SERVER_NAME=$(az deployment group show \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$AZURE_DEPLOYMENT_NAME" \
+  --query "properties.outputs.sqlServerName.value" \
+  --output tsv)
+
+ensure_sql_entra_admin "$SQL_SERVER_NAME" "$(current_principal_json)"
 
 STORAGE_ACCOUNT_NAME=$(az deployment group show \
   --resource-group "$AZURE_RESOURCE_GROUP" \

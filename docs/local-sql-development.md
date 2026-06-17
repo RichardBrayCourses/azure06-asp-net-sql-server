@@ -50,7 +50,7 @@ Or use the environment shortcut:
 pnpm run testing:migrate:azure
 ```
 
-The Azure migration script reads the SQL password from Azure Key Vault, reads the SQL server and database names from the environment deployment outputs, allows your current public IP through the SQL firewall, and passes an explicit Azure SQL connection string to EF Core.
+The Azure migration script reads the SQL server and database names from the environment deployment outputs, allows your current public IP through the SQL firewall, and passes a Microsoft Entra Azure SQL connection string to EF Core. Local runs use your `az login` identity. GitHub Actions runs use the Azure login service principal.
 
 ## Build And Test
 

@@ -28,20 +28,6 @@ else
   echo "Resource group does not exist. Nothing to delete: $AZURE_RESOURCE_GROUP"
 fi
 
-if az keyvault list-deleted \
-  --query "[?name=='$AZURE_KEY_VAULT_NAME'] | [0].name" \
-  --output tsv | grep -q "^$AZURE_KEY_VAULT_NAME$"; then
-  echo ""
-  echo "Requesting purge for deleted Key Vault: $AZURE_KEY_VAULT_NAME"
-  echo ""
-
-  az keyvault purge \
-    --name "$AZURE_KEY_VAULT_NAME" \
-    --location "$AZURE_LOCATION" \
-    --no-wait \
-    --output none
-fi
-
 echo ""
 echo "Delete requested."
 echo ""
