@@ -27,7 +27,7 @@ staging
 production
 ```
 
-Each environment has its own Azure resource group, storage account, static website endpoint, App Configuration store, Entra app registration, Azure SQL server, Azure SQL database, generated frontend `.env` file, and Cloudflare DNS record.
+Each environment has its own Azure resource group, storage account, static website endpoint, API App Service, App Configuration store, Entra app registration, Azure SQL server, Azure SQL database, generated frontend `.env` file, and Cloudflare DNS record.
 
 ## Deploy The System
 
@@ -113,26 +113,23 @@ First-time testing deployment:
 
 ```bash
 pnpm run deploy:testing
-pnpm run database:update:testing
 ```
 
 First-time staging deployment:
 
 ```bash
 pnpm run deploy:staging
-pnpm run database:update:staging
 ```
 
 First-time production deployment:
 
 ```bash
 pnpm run deploy:production
-pnpm run database:update:production
 ```
 
-Use the same commands for later deployments. The deploy command creates or updates infrastructure and uploads the frontend. The database update command applies the current database source to Azure SQL.
+Use the same commands for later deployments. The deploy command creates or updates infrastructure, applies the current database source to Azure SQL, deploys the API, generates the frontend `.env`, builds the shell, and uploads the frontend.
 
-The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation. It is not typed, stored, or reused. `deploy:<environment>` sets the current Azure identity as the SQL Microsoft Entra admin, and the database update command authenticates with Microsoft Entra.
+The SQL administrator password is generated only as a throwaway value required by Azure SQL server creation and API connection configuration. It is not typed or stored in the repository. `deploy:<environment>` sets the current Azure identity as the SQL Microsoft Entra admin, and the database update authenticates with Microsoft Entra.
 
 ### GitHub Actions Deployment
 
@@ -180,7 +177,7 @@ pnpm run release:production
 pnpm run wait-for-deploy:production
 ```
 
-GitHub Actions runs `deploy:<environment>` and then `database:update:<environment>`. The Azure login service principal becomes the SQL Microsoft Entra admin during deployment, and the database update authenticates with that same identity. No GitHub SQL password secret is required.
+GitHub Actions runs `deploy:<environment>`. The Azure login service principal becomes the SQL Microsoft Entra admin during deployment, and the database update authenticates with that same identity. No GitHub SQL password secret is required.
 
 ### Preview, Inspect, And Delete
 
@@ -467,6 +464,9 @@ It then reads these keys from Azure App Configuration:
 VITE_ENTRA_CLIENT_ID
 VITE_ENTRA_AUTHORITY
 VITE_ENTRA_API_SCOPE
+VITE_API_BASE_URL
+VITE_APP_ENVIRONMENT
+VITE_DEMO_SIGN_IN_KEY
 ```
 
 It writes:

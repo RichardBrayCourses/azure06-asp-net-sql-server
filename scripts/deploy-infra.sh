@@ -109,8 +109,15 @@ ENTRA_OBJECT_ID=$(az ad app show \
   --query "id" \
   --output tsv)
 
+if [[ -z "$ENTRA_API_SCOPE" ]]; then
+  ENTRA_API_SCOPE="api://$ENTRA_CLIENT_ID/access_as_user"
+fi
+
+ENTRA_API_AUDIENCE="${ENTRA_API_SCOPE%/access_as_user}"
+ENTRA_API_SCOPE_ID=$(node -e "const crypto = require('crypto'); const hex = crypto.createHash('sha256').update(process.argv[1]).digest('hex').slice(0, 32); process.stdout.write([hex.slice(0, 8), hex.slice(8, 12), '4' + hex.slice(13, 16), ((parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, '0') + hex.slice(18, 20), hex.slice(20, 32)].join('-'));" "$ENTRA_API_SCOPE")
+
 ENTRA_REDIRECT_URIS_JSON=$(node -e "process.stdout.write(JSON.stringify(['http://localhost:5173/auth/callback', 'https://' + process.argv[1] + '/auth/callback']))" "$AZURE_DOMAIN_NAME")
-ENTRA_PATCH_BODY=$(node -e "process.stdout.write(JSON.stringify({ spa: { redirectUris: JSON.parse(process.argv[1]) } }))" "$ENTRA_REDIRECT_URIS_JSON")
+ENTRA_PATCH_BODY=$(node -e "process.stdout.write(JSON.stringify({ identifierUris: [process.argv[2]], spa: { redirectUris: JSON.parse(process.argv[1]) }, api: { requestedAccessTokenVersion: 2, oauth2PermissionScopes: [{ id: process.argv[3], adminConsentDescription: 'Allow the All Checks Out shell to call the All Checks Out API as the signed-in user.', adminConsentDisplayName: 'Access All Checks Out API', isEnabled: true, type: 'User', userConsentDescription: 'Allow the All Checks Out shell to call the All Checks Out API as you.', userConsentDisplayName: 'Access All Checks Out API', value: 'access_as_user' }] } }))" "$ENTRA_REDIRECT_URIS_JSON" "$ENTRA_API_AUDIENCE" "$ENTRA_API_SCOPE_ID")
 
 az rest \
   --method PATCH \
@@ -136,6 +143,7 @@ az deployment group create \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
     entraApiScope="$ENTRA_API_SCOPE" \
+    entraAudience="$ENTRA_API_AUDIENCE" \
     demoSignInKey="$DEMO_SIGN_IN_KEY" \
     sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
     sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \
@@ -183,7 +191,9 @@ echo ""
 echo "Infrastructure deployment complete."
 echo "Environment: $ENVIRONMENT_NAME"
 echo "Domain: https://$AZURE_DOMAIN_NAME"
+echo "API URL: $(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_DEPLOYMENT_NAME" --query "properties.outputs.apiBaseUrl.value" --output tsv)"
 echo "Entra client ID: $ENTRA_CLIENT_ID"
+echo "Entra API scope: $ENTRA_API_SCOPE"
 echo "Azure SQL server: $(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_DEPLOYMENT_NAME" --query "properties.outputs.sqlServerFullyQualifiedDomainName.value" --output tsv)"
 echo "Azure SQL database: $(az deployment group show --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_DEPLOYMENT_NAME" --query "properties.outputs.sqlDatabaseName.value" --output tsv)"
 echo ""

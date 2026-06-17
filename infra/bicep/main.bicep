@@ -24,9 +24,15 @@ param entraTenantId string
 @description('Optional API scope requested by the UI.')
 param entraApiScope string = ''
 
+@description('The Microsoft Entra audience accepted by the API.')
+param entraAudience string = ''
+
 @description('Shared demo sign-in key sent by the shell when it loads pre-authentication sign-in options.')
 @secure()
 param demoSignInKey string = ''
+
+@description('The Azure App Service Plan SKU used by the API host.')
+param apiAppServicePlanSku string = 'B1'
 
 @description('The Azure App Configuration SKU.')
 @allowed([
@@ -49,6 +55,14 @@ var storageAccountName = take('${appName}${uniqueString(resourceGroup().id)}', 2
 var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().id)}', 50)
 var sqlServerName = take('${appName}-${sqlLocation}-sql-${uniqueString(resourceGroup().id, sqlLocation)}', 63)
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)
+var apiAppServicePlanName = take('${appName}-${environmentName}-api-plan', 60)
+var apiAppName = take('${appName}-${environmentName}-api-${uniqueString(resourceGroup().id)}', 60)
+var apiBaseUrl = 'https://${apiAppName}.azurewebsites.net'
+var frontendOrigin = 'https://${domainName}'
+var sqlConnectionString = 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlDatabaseName};User ID=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+var apiValidAudiences = empty(entraAudience)
+  ? union([entraClientId], empty(entraApiScope) ? [] : [replace(entraApiScope, '/access_as_user', '')])
+  : union([entraAudience, entraClientId], empty(entraApiScope) ? [] : [replace(entraApiScope, '/access_as_user', '')])
 
 resource websiteStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -108,6 +122,87 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
   }
 }
 
+resource apiAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: apiAppServicePlanName
+  location: location
+  sku: {
+    name: apiAppServicePlanSku
+  }
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
+}
+
+resource casesApiApp 'Microsoft.Web/sites@2023-12-01' = {
+  name: apiAppName
+  location: location
+  kind: 'app,linux'
+  dependsOn: [
+    sqlDatabase
+  ]
+  properties: {
+    serverFarmId: apiAppServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|10.0'
+      ftpsState: 'FtpsOnly'
+      minTlsVersion: '1.2'
+      appSettings: [
+        {
+          name: 'ASPNETCORE_ENVIRONMENT'
+          value: 'Production'
+        }
+        {
+          name: 'ConnectionStrings__AllChecksOut'
+          value: sqlConnectionString
+        }
+        {
+          name: 'Cors__AllowedOrigins__0'
+          value: frontendOrigin
+        }
+        {
+          name: 'Cors__AllowedOrigins__1'
+          value: 'http://localhost:5173'
+        }
+        {
+          name: 'Cors__AllowedOrigins__2'
+          value: 'http://127.0.0.1:5173'
+        }
+        {
+          name: 'Authentication__Entra__Authority'
+          value: entraAuthority
+        }
+        {
+          name: 'Authentication__Entra__TenantId'
+          value: entraTenantId
+        }
+        {
+          name: 'Authentication__Entra__ClientId'
+          value: entraClientId
+        }
+        {
+          name: 'Authentication__Entra__Audience'
+          value: empty(entraAudience) ? entraClientId : entraAudience
+        }
+        {
+          name: 'Authentication__Entra__ValidAudiences__0'
+          value: apiValidAudiences[0]
+        }
+        {
+          name: 'Authentication__Entra__ValidAudiences__1'
+          value: length(apiValidAudiences) > 1 ? apiValidAudiences[1] : apiValidAudiences[0]
+        }
+        {
+          name: 'DemoSignIn__Key'
+          value: demoSignInKey
+        }
+      ]
+      healthCheckPath: '/health'
+    }
+  }
+}
+
 resource environmentConfig 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
   parent: appConfiguration
   name: 'APP_ENVIRONMENT'
@@ -153,6 +248,15 @@ resource entraApiScopeConfig 'Microsoft.AppConfiguration/configurationStores/key
   }
 }
 
+resource apiBaseUrlConfig 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: appConfiguration
+  name: 'VITE_API_BASE_URL'
+  properties: {
+    value: apiBaseUrl
+    contentType: 'text/plain'
+  }
+}
+
 resource appEnvironmentConfig 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
   parent: appConfiguration
   name: 'VITE_APP_ENVIRONMENT'
@@ -173,6 +277,8 @@ resource demoSignInKeyConfig 'Microsoft.AppConfiguration/configurationStores/key
 
 output storageAccountName string = websiteStorage.name
 output appConfigurationName string = appConfiguration.name
+output apiAppName string = casesApiApp.name
+output apiBaseUrl string = apiBaseUrl
 output sqlServerName string = sqlServer.name
 output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName
 output sqlDatabaseName string = sqlDatabase.name

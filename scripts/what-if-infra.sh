@@ -20,6 +20,16 @@ ENTRA_CLIENT_ID=$(az ad app list \
   --query "[0].appId" \
   --output tsv)
 
+if [[ -z "$ENTRA_CLIENT_ID" ]]; then
+  ENTRA_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+fi
+
+if [[ -z "$ENTRA_API_SCOPE" ]]; then
+  ENTRA_API_SCOPE="api://$ENTRA_CLIENT_ID/access_as_user"
+fi
+
+ENTRA_API_AUDIENCE="${ENTRA_API_SCOPE%/access_as_user}"
+
 az deployment group what-if \
   --resource-group "$AZURE_RESOURCE_GROUP" \
   --name "$AZURE_DEPLOYMENT_NAME" \
@@ -33,6 +43,7 @@ az deployment group what-if \
     entraClientId="$ENTRA_CLIENT_ID" \
     entraTenantId="$ENTRA_TENANT_ID" \
     entraApiScope="$ENTRA_API_SCOPE" \
+    entraAudience="$ENTRA_API_AUDIENCE" \
     demoSignInKey="$DEMO_SIGN_IN_KEY" \
     sqlAdministratorLogin="$AZURE_SQL_ADMIN_LOGIN" \
     sqlAdministratorPassword="$AZURE_SQL_ADMIN_PASSWORD" \

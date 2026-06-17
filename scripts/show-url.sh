@@ -43,6 +43,12 @@ WEBSITE_HOST="${WEBSITE_URL#https://}"
 WEBSITE_HOST="${WEBSITE_HOST#http://}"
 WEBSITE_HOST="${WEBSITE_HOST%/}"
 
+API_BASE_URL=$(az deployment group show \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
+  --name "$AZURE_DEPLOYMENT_NAME" \
+  --query "properties.outputs.apiBaseUrl.value" \
+  --output tsv)
+
 if [[ -z "$WEBSITE_URL" || "$WEBSITE_URL" == "null" ]]; then
   echo ""
   echo "Static website URL was not found for storage account: $STORAGE_ACCOUNT_NAME"
@@ -66,6 +72,9 @@ echo ""
 echo "Public environment URL:"
 echo "https://$AZURE_DOMAIN_NAME"
 echo ""
+echo "API URL:"
+echo "$API_BASE_URL"
+echo ""
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   {
@@ -74,6 +83,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     echo "| URL type | URL |"
     echo "| --- | --- |"
     echo "| Azure static website | $WEBSITE_URL |"
+    echo "| API | $API_BASE_URL |"
     echo "| Cloudflare CNAME target | $WEBSITE_HOST |"
     echo "| Public environment | https://$AZURE_DOMAIN_NAME |"
     echo ""

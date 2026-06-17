@@ -1,4 +1,4 @@
-name: Deploy Static Website
+name: Deploy
 
 on:
   push:
@@ -55,22 +55,10 @@ jobs:
         if: github.ref_name == 'testing'
         run: pnpm run deploy:testing
 
-      - name: Update testing database
-        if: github.ref_name == 'testing'
-        run: pnpm run database:update:testing
-
       - name: Deploy staging
         if: github.ref_name == 'staging'
         run: pnpm run deploy:staging
 
-      - name: Update staging database
-        if: github.ref_name == 'staging'
-        run: pnpm run database:update:staging
-
       - name: Deploy production
         if: github.ref_name == 'production'
         run: pnpm run deploy:production
-
-      - name: Update production database
-        if: github.ref_name == 'production'
-        run: pnpm run database:update:production
