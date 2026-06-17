@@ -206,9 +206,7 @@ az group exists --name all-checks-out-production-rg
 
 Destroy commands delete the entire Azure resource group for an environment. That removes the static website storage account, App Configuration store, Azure SQL server, Azure SQL database, and any data in that environment. They do not change GitHub or Cloudflare.
 
-After a clean rebuild, reconnect or verify the registered domain before testing sign-in.
-
-If no registered domain has been created for the environment yet, use the copied Azure04 DNS notes in [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup).
+`After a clean rebuild, reconnect or verify the Cloudflare CNAME before testing sign-in.`
 
 This matters after destroy/redeploy because the Azure resource group is recreated from scratch, including the static website storage account. Cloudflare must point the public hostname at the current Azure static website CNAME target, and Azure Storage must accept the custom domain before the Entra redirect test can prove the environment is healthy.
 
@@ -220,23 +218,37 @@ Run:
 pnpm run destroy:testing
 pnpm run deploy:testing
 pnpm run testing:get-storage-account
+```
+
+`Copy the CNAME target printed by testing:get-storage-account.`
+
+`Create or update this Cloudflare DNS record.`
+
+```text
+Type: CNAME
+Name: testing
+Target: the value printed by pnpm run testing:get-storage-account
+Proxy status: DNS only while connecting the domain
+```
+
+`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
+
+```bash
 pnpm run testing:connect-domain
 pnpm run testing:migrate:azure
 ```
 
-If `testing:connect-domain` says the CNAME is wrong or missing, update the testing Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+`Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
 
-```bash
-pnpm run testing:connect-domain
-```
-
-Open:
+`Open the public URL.`
 
 ```text
 https://testing.all-checks-out.com
 ```
 
-Sign in. The deployed testing site should redirect through Microsoft Entra and then back to:
+`Sign in.`
+
+The deployed testing site should redirect through Microsoft Entra and then back to:
 
 ```text
 https://testing.all-checks-out.com/auth/callback
@@ -250,23 +262,37 @@ Run:
 pnpm run destroy:staging
 pnpm run deploy:staging
 pnpm run staging:get-storage-account
+```
+
+`Copy the CNAME target printed by staging:get-storage-account.`
+
+`Create or update this Cloudflare DNS record.`
+
+```text
+Type: CNAME
+Name: staging
+Target: the value printed by pnpm run staging:get-storage-account
+Proxy status: DNS only while connecting the domain
+```
+
+`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
+
+```bash
 pnpm run staging:connect-domain
 pnpm run staging:migrate:azure
 ```
 
-If `staging:connect-domain` says the CNAME is wrong or missing, update the staging Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+`Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
 
-```bash
-pnpm run staging:connect-domain
-```
-
-Open:
+`Open the public URL.`
 
 ```text
 https://staging.all-checks-out.com
 ```
 
-Sign in. The deployed staging site should redirect through Microsoft Entra and then back to:
+`Sign in.`
+
+The deployed staging site should redirect through Microsoft Entra and then back to:
 
 ```text
 https://staging.all-checks-out.com/auth/callback
@@ -274,35 +300,56 @@ https://staging.all-checks-out.com/auth/callback
 
 #### Clean Rebuild Production
 
-Run:
+Delete production:
 
 ```bash
 pnpm run destroy:production
-pnpm run deploy:production
-pnpm run production:get-storage-account
-pnpm run production:connect-domain
-pnpm run production:migrate:azure
 ```
 
-Production deletion asks for confirmation. Type exactly:
+Production deletion asks for confirmation.
+
+`Type DELETE-PRODUCTION when prompted.`
 
 ```text
 DELETE-PRODUCTION
 ```
 
-If `production:connect-domain` says the CNAME is wrong or missing, update the production Cloudflare CNAME by using [Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup), then rerun:
+`Redeploy production, then print the new production CNAME target.`
+
+```bash
+pnpm run deploy:production
+pnpm run production:get-storage-account
+```
+
+`Copy the CNAME target printed by production:get-storage-account.`
+
+`Create or update this Cloudflare DNS record.`
+
+```text
+Type: CNAME
+Name: www
+Target: the value printed by pnpm run production:get-storage-account
+Proxy status: DNS only while connecting the domain
+```
+
+`After the DNS record is visible, connect the custom domain in Azure Storage and migrate the database.`
 
 ```bash
 pnpm run production:connect-domain
+pnpm run production:migrate:azure
 ```
 
-Open:
+`Switch the Cloudflare proxy status back to Proxied after Azure accepts the custom domain.`
+
+`Open the public URL.`
 
 ```text
 https://www.all-checks-out.com
 ```
 
-Sign in. The deployed production site should redirect through Microsoft Entra and then back to:
+`Sign in.`
+
+The deployed production site should redirect through Microsoft Entra and then back to:
 
 ```text
 https://www.all-checks-out.com/auth/callback
@@ -310,91 +357,55 @@ https://www.all-checks-out.com/auth/callback
 
 `destroy:testing` deletes Azure resources. `migrations:reset` changes repository files by deleting EF migration source files and leaving the repo with no migration history. `testing:migrate:azure` creates the first fresh `InitialSqlFoundation` migration from the current model if no migrations exist, then applies it to Azure SQL. Keep Azure cleanup and repo cleanup separate so an Azure cleanup command never silently rewrites git files.
 
-If you are still actively reshaping the first EF model and deliberately want to replace the migration source files, reset migrations before the testing deployment:
+If you are still actively reshaping the first EF model and deliberately want to replace the migration source files:
+
+`Use the same testing clean rebuild flow, but insert migrations:reset before deploy:testing.`
 
 ```bash
 pnpm run destroy:testing
 pnpm run migrations:reset
 pnpm run deploy:testing
 pnpm run testing:get-storage-account
+```
+
+`Update the Cloudflare CNAME testing record to the printed target.`
+
+`Connect the custom domain and migrate.`
+
+```bash
 pnpm run testing:connect-domain
 pnpm run testing:migrate:azure
 ```
 
-## Reference: Azure04 Cloudflare DNS Setup
+### Cloudflare DNS Settings
 
-Markdown files can link to sections in the same file. The clean rebuild instructions above link here with:
-
-```text
-[Reference: Azure04 Cloudflare DNS Setup](#reference-azure04-cloudflare-dns-setup)
-```
-
-The following Azure04 DNS sections are copied unaltered. Azure06 uses the production hostname `www.all-checks-out.com`; use the Azure06 production hostname when testing this repository.
-
-## Step 5: Connect Testing DNS In Cloudflare
-
-After testing deploys, the script prints an Azure URL like:
-
-```text
-https://<storage-account>.z33.web.core.windows.net/
-```
-
-Create or update this Cloudflare record:
-
-```text
-Type: CNAME
-Name: testing
-Target: <storage-account>.z33.web.core.windows.net
-Proxy status: Proxied
-```
-
-Recommended Cloudflare settings:
+`Use these Cloudflare settings for the public hostnames.`
 
 - SSL/TLS encryption mode: `Full`
 - Always Use HTTPS: enabled
 - Automatic HTTPS Rewrites: enabled
 
-After DNS is ready, test:
+The environment DNS records are:
 
-```text
-https://testing.all-checks-out.com
+| Environment | Public hostname | Cloudflare record |
+| --- | --- | --- |
+| Testing | `testing.all-checks-out.com` | `CNAME testing` |
+| Staging | `staging.all-checks-out.com` | `CNAME staging` |
+| Production | `www.all-checks-out.com` | `CNAME www` |
+
+`For each environment, get the current Azure Storage static website target.`
+
+```bash
+pnpm run testing:get-storage-account
+pnpm run staging:get-storage-account
+pnpm run production:get-storage-account
 ```
 
-## Step 7: Connect Staging DNS In Cloudflare
+`Use the printed value as the Cloudflare CNAME target for that environment.`
 
-After staging deploys, create or update:
+`Set the Cloudflare record to DNS only while running *:connect-domain.`
 
-```text
-Type: CNAME
-Name: staging
-Target: the staging *.web.core.windows.net host
-Proxy status: Proxied
-```
-
-Then test:
-
-```text
-https://staging.all-checks-out.com
-```
-
-## Step 9: Connect Production DNS In Cloudflare
-
-After production deploys, create or update:
-
-```text
-Type: CNAME
-Name: @
-Target: the production *.web.core.windows.net host
-Proxy status: Proxied
-```
-
-Cloudflare may show this as CNAME flattening for the apex domain.
-
-Then test:
-
-```text
-https://all-checks-out.com
-```
+`Switch the Cloudflare record back to Proxied after Azure accepts the custom domain.`
 
 ## Script Configuration
 
