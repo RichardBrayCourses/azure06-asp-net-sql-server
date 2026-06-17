@@ -92,21 +92,24 @@ foreach (var line in File.ReadLines(mappingFile))
     using var document = JsonDocument.Parse(line);
     var root = document.RootElement;
     var userAccountId = root.GetProperty("userAccountId").GetString();
+    var email = root.GetProperty("userPrincipalName").GetString();
     var entraObjectId = root.GetProperty("entraObjectId").GetString();
 
-    if (string.IsNullOrWhiteSpace(userAccountId) || string.IsNullOrWhiteSpace(entraObjectId))
+    if (string.IsNullOrWhiteSpace(userAccountId) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(entraObjectId))
     {
-        throw new InvalidOperationException("Each mapping row must include userAccountId and entraObjectId.");
+        throw new InvalidOperationException("Each mapping row must include userAccountId, userPrincipalName, and entraObjectId.");
     }
 
     await using var command = connection.CreateCommand();
     command.CommandText = """
         UPDATE [cases].[UserAccounts]
         SET [EntraObjectId] = @entraObjectId,
+            [Email] = LOWER(@email),
             [UpdatedAt] = SYSDATETIMEOFFSET()
         WHERE [Id] = @userAccountId;
         """;
     command.Parameters.AddWithValue("@userAccountId", userAccountId);
+    command.Parameters.AddWithValue("@email", email);
     command.Parameters.AddWithValue("@entraObjectId", entraObjectId);
 
     var rowCount = await command.ExecuteNonQueryAsync();
@@ -118,7 +121,7 @@ foreach (var line in File.ReadLines(mappingFile))
     updated++;
 }
 
-Console.WriteLine($"Updated {updated} user account Entra object IDs.");
+Console.WriteLine($"Updated {updated} user account Entra object IDs and email addresses.");
 return 0;
 CS
 

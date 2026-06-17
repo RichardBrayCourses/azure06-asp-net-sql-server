@@ -3,12 +3,13 @@ import {
   type AccountInfo,
   type AuthenticationResult,
 } from "@azure/msal-browser";
-import { entraConfig, getEntraRedirectUri, getMissingEntraConfigKeys } from "./config";
+import { entraConfig, getAuthStorageKey, getEntraRedirectUri, getMissingEntraConfigKeys } from "./config";
 
-const pendingSelectionKey = "entra.pendingSignInSelection";
+const pendingSelectionKey = getAuthStorageKey("entra.pendingSignInSelection");
 
 export type EntraPendingSelection = {
   authenticatableUserId: string;
+  entraObjectId?: string | null;
   name: string;
   email: string;
   authorityId: string;

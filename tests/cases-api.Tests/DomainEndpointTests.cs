@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using System.Text.Json;
+using AllChecksOut.Cases.Api.Authentication;
 using AllChecksOut.Cases.Api.CurrentUser;
 using AllChecksOut.Cases.Api.Data;
 using AllChecksOut.Cases.Api.Domain;
@@ -30,6 +32,30 @@ public sealed class DomainEndpointTests
         var response = await client.GetAsync("/api/participants?authorityId=northstar-association");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DemoSignInOptions_RequireHeaderKey_AndReturnDatabaseUsers()
+    {
+        await using var app = await TestCasesApi.CreateAsync();
+        using var client = app.CreateClient();
+
+        var unauthorized = await client.GetAsync("/api/demo/sign-in-options");
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+
+        client.DefaultRequestHeaders.Add("X-Demo-SignIn-Key", "test-demo-key");
+        var response = await client.GetAsync("/api/demo/sign-in-options");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var body = await JsonDocument.ParseAsync(stream);
+
+        Assert.Contains(body.RootElement.GetProperty("users").EnumerateArray(), user =>
+            user.GetProperty("id").GetString() == "user-jonathan-price" &&
+            user.GetProperty("email").GetString() == "jonathan.price@artyuptickgmail.onmicrosoft.com");
+        Assert.Contains(body.RootElement.GetProperty("memberships").EnumerateArray(), membership =>
+            membership.GetProperty("type").GetString() == "authority" &&
+            membership.GetProperty("userAccountId").GetString() == "user-jonathan-price");
     }
 
     [Fact]
@@ -141,6 +167,7 @@ public sealed class DomainEndpointTests
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ApplicationUserResolver>();
             builder.Services.AddScoped<CasesDomainService>();
+            builder.Services.Configure<DemoSignInOptions>(options => options.Key = "test-demo-key");
             builder.Services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;

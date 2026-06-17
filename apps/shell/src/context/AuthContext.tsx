@@ -13,6 +13,7 @@ import {
   startEntraLogin,
   type EntraAuthenticatedIdentity,
 } from "@/lib/entra/auth";
+import { getAuthStorageKey } from "@/lib/entra/config";
 
 /////////////
 // USER TYPE
@@ -111,6 +112,7 @@ interface AuthContextData {
 }
 export type SignInSelection = {
   authenticatableUserId: string;
+  entraObjectId?: string | null;
   name: string;
   email: string;
   authorityId: string;
@@ -165,11 +167,11 @@ function normalizeContextType(value: unknown): AccountContextType | null {
 ////////////////////////
 
 function saveContext(contextData: AuthContextData) {
-  localStorage.setItem("user", JSON.stringify(contextData.user));
+  localStorage.setItem(getAuthStorageKey("user"), JSON.stringify(contextData.user));
 }
 
 function loadContext(): AuthContextData {
-  const storedData = localStorage.getItem("user");
+  const storedData = localStorage.getItem(getAuthStorageKey("user"));
 
   if (storedData === null) {
     return { user: LOGGED_OUT_USER };
@@ -234,7 +236,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const completeEntraSignIn = async () => {
     const { selection, identity } = await completeEntraRedirect();
-    if (identity.email.toLowerCase() !== selection.email.toLowerCase()) {
+    if (selection.entraObjectId && identity.objectId !== selection.entraObjectId) {
+      throw new Error(
+        `Entra authenticated object id ${identity.objectId}, but the selected user expects ${selection.entraObjectId}.`,
+      );
+    }
+    if (!selection.entraObjectId && identity.email.toLowerCase() !== selection.email.toLowerCase()) {
       throw new Error(
         `Entra authenticated ${identity.email}, but the selected user is ${selection.email}.`,
       );

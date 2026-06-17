@@ -120,6 +120,7 @@ export class ApiBackedAllChecksOutDatabase extends InMemoryAllChecksOutDatabase 
         this.replaceEntities(this.participants, ParticipantEntity, apiRequest<ParticipantDto[]>("/api/participants")),
         this.replaceEntities(this.cases, CaseEntity, apiRequest<CaseDto[]>("/api/cases")),
       ]);
+      await this.ignoreForbidden(this.replaceEntities(this.userAccounts, UserAccountEntity, apiRequest<UserAccountDto[]>("/api/users")));
 
       await Promise.all(authorityIds.map((authorityId) => this.hydrateAuthority(authorityId)));
       await Promise.all([...this.participants.map((participant) => participant.id), ...participantIds].map((participantId) => this.hydrateParticipant(participantId)));

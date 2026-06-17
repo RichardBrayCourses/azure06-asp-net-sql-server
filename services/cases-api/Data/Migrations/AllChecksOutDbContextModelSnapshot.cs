@@ -2841,7 +2841,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-jonathan-price",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Jonathan Price",
-                            Email = "arty.uptick+jonathan.price@gmail.com",
+                            Email = "jonathan.price@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-jonathan-price",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2851,7 +2851,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-amara-singh",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Amara Singh",
-                            Email = "arty.uptick+amara.singh@gmail.com",
+                            Email = "amara.singh@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-amara-singh",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2861,7 +2861,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-aisha-khan",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Aisha Khan",
-                            Email = "arty.uptick+aisha.khan@gmail.com",
+                            Email = "aisha.khan@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-aisha-khan",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2871,7 +2871,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-michael-reeves",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Michael Reeves",
-                            Email = "arty.uptick+michael.reeves@gmail.com",
+                            Email = "michael.reeves@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-michael-reeves",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2881,7 +2881,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-lewis-green",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Lewis Green",
-                            Email = "arty.uptick+lewis.green@gmail.com",
+                            Email = "lewis.green@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-lewis-green",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2891,7 +2891,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-amelia-wright",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Amelia Wright",
-                            Email = "arty.uptick+amelia.wright@gmail.com",
+                            Email = "amelia.wright@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-amelia-wright",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2901,7 +2901,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-maya-patel",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Maya Patel",
-                            Email = "arty.uptick+maya.patel@gmail.com",
+                            Email = "maya.patel@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-maya-patel",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2911,7 +2911,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-owen-clarke",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Owen Clarke",
-                            Email = "arty.uptick+owen.clarke@gmail.com",
+                            Email = "owen.clarke@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-owen-clarke",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2921,7 +2921,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-rachel-morgan",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Rachel Morgan",
-                            Email = "arty.uptick+rachel.morgan@gmail.com",
+                            Email = "rachel.morgan@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-rachel-morgan",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2931,7 +2931,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-peter-walsh",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Peter Walsh",
-                            Email = "arty.uptick+peter.walsh@gmail.com",
+                            Email = "peter.walsh@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-peter-walsh",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2941,7 +2941,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-sophie-turner",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Sophie Turner",
-                            Email = "arty.uptick+sophie.turner@gmail.com",
+                            Email = "sophie.turner@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-sophie-turner",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2951,7 +2951,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-benjamin-foster",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Benjamin Foster",
-                            Email = "arty.uptick+benjamin.foster@gmail.com",
+                            Email = "benjamin.foster@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-benjamin-foster",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2961,7 +2961,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-priya-shah",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Priya Shah",
-                            Email = "arty.uptick+priya.shah@gmail.com",
+                            Email = "priya.shah@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-priya-shah",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2971,7 +2971,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-george-evans",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "George Evans",
-                            Email = "arty.uptick+george.evans@gmail.com",
+                            Email = "george.evans@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-george-evans",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2981,7 +2981,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-ellen-brooks",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Ellen Brooks",
-                            Email = "arty.uptick+ellen.brooks@gmail.com",
+                            Email = "ellen.brooks@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-ellen-brooks",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
@@ -2991,7 +2991,7 @@ namespace AllChecksOut.Cases.Api.Data.Migrations
                             Id = "user-nadia-cole",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 3, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             DisplayName = "Nadia Cole",
-                            Email = "arty.uptick+nadia.cole@gmail.com",
+                            Email = "nadia.cole@artyuptickgmail.onmicrosoft.com",
                             EntraObjectId = "entra-user-nadia-cole",
                             Status = "ACTIVE",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 6, 15, 9, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))

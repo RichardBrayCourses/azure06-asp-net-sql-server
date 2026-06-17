@@ -1,11 +1,9 @@
 import { useAuth, type UserRole } from "@/context/AuthContext";
 import {
-  defaultTerminologyLabels,
   terminologyLabel,
   terminologyTitle,
   type AccountContext,
   type AuthorityDto,
-  type TerminologyLabels,
   type UserAccountDto,
 } from "@/data/console";
 import {
@@ -26,6 +24,7 @@ type RuntimeAccountContext = Omit<AccountContext, "entityId" | "entityType" | "r
   entityType: PrimaryContextType;
   entityId: string;
   role: UserRole;
+  entraObjectId: string;
 };
 
 export default function SignInPage() {
@@ -63,7 +62,7 @@ export default function SignInPage() {
   const selectedMembership = selectedContextType && selectedEntityId
     ? { entityType: selectedContextType, entityId: selectedEntityId }
     : null;
-  const terminology = defaultTerminologyLabels;
+  const terminology = undefined;
   const contextTypeOptions: Array<{ value: PrimaryContextType; label: string }> = [
     { value: "authority", label: terminologyTitle(terminology, "authority") },
     { value: "participant", label: terminologyTitle(terminology, "participant") },
@@ -118,6 +117,7 @@ export default function SignInPage() {
     try {
       await login({
         authenticatableUserId: context.authenticatableUserId,
+        entraObjectId: context.entraObjectId,
         name: context.name,
         email: context.email,
         authorityId: context.authorityId,
@@ -241,7 +241,7 @@ export default function SignInPage() {
   );
 }
 
-function buildAccountContexts(options: DemoSignInOptionsDto, terminology: TerminologyLabels): RuntimeAccountContext[] {
+function buildAccountContexts(options: DemoSignInOptionsDto, terminology: undefined): RuntimeAccountContext[] {
   return options.memberships.flatMap((membership) => {
     const user = findUser(options.users, membership.userAccountId);
     if (!user) return [];
@@ -299,6 +299,7 @@ function contextFromMembership(
     authenticatableUserId: user.id,
     name: user.displayName,
     email: user.email,
+    entraObjectId: user.entraObjectId,
     authorityId,
     authorityName,
     role,

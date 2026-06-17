@@ -831,22 +831,22 @@ export class InMemoryAllChecksOutDatabase {
   ];
 
   readonly userAccounts = [
-    this.user("user-jonathan-price", "Jonathan Price", "arty.uptick+jonathan.price@gmail.com"),
-    this.user("user-amara-singh", "Amara Singh", "arty.uptick+amara.singh@gmail.com"),
-    this.user("user-aisha-khan", "Aisha Khan", "arty.uptick+aisha.khan@gmail.com"),
-    this.user("user-michael-reeves", "Michael Reeves", "arty.uptick+michael.reeves@gmail.com"),
-    this.user("user-lewis-green", "Lewis Green", "arty.uptick+lewis.green@gmail.com"),
-    this.user("user-amelia-wright", "Amelia Wright", "arty.uptick+amelia.wright@gmail.com"),
-    this.user("user-maya-patel", "Maya Patel", "arty.uptick+maya.patel@gmail.com"),
-    this.user("user-owen-clarke", "Owen Clarke", "arty.uptick+owen.clarke@gmail.com"),
-    this.user("user-rachel-morgan", "Rachel Morgan", "arty.uptick+rachel.morgan@gmail.com"),
-    this.user("user-peter-walsh", "Peter Walsh", "arty.uptick+peter.walsh@gmail.com"),
-    this.user("user-sophie-turner", "Sophie Turner", "arty.uptick+sophie.turner@gmail.com"),
-    this.user("user-benjamin-foster", "Benjamin Foster", "arty.uptick+benjamin.foster@gmail.com"),
-    this.user("user-priya-shah", "Priya Shah", "arty.uptick+priya.shah@gmail.com"),
-    this.user("user-george-evans", "George Evans", "arty.uptick+george.evans@gmail.com"),
-    this.user("user-ellen-brooks", "Ellen Brooks", "arty.uptick+ellen.brooks@gmail.com"),
-    this.user("user-nadia-cole", "Nadia Cole", "arty.uptick+nadia.cole@gmail.com"),
+    this.user("user-jonathan-price", "Jonathan Price", "jonathan.price@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-amara-singh", "Amara Singh", "amara.singh@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-aisha-khan", "Aisha Khan", "aisha.khan@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-michael-reeves", "Michael Reeves", "michael.reeves@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-lewis-green", "Lewis Green", "lewis.green@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-amelia-wright", "Amelia Wright", "amelia.wright@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-maya-patel", "Maya Patel", "maya.patel@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-owen-clarke", "Owen Clarke", "owen.clarke@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-rachel-morgan", "Rachel Morgan", "rachel.morgan@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-peter-walsh", "Peter Walsh", "peter.walsh@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-sophie-turner", "Sophie Turner", "sophie.turner@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-benjamin-foster", "Benjamin Foster", "benjamin.foster@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-priya-shah", "Priya Shah", "priya.shah@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-george-evans", "George Evans", "george.evans@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-ellen-brooks", "Ellen Brooks", "ellen.brooks@artyuptickgmail.onmicrosoft.com"),
+    this.user("user-nadia-cole", "Nadia Cole", "nadia.cole@artyuptickgmail.onmicrosoft.com"),
   ];
 
   readonly authorityUsers = [

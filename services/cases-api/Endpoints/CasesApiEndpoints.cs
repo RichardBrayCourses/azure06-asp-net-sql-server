@@ -62,22 +62,35 @@ public static class CasesApiEndpoints
                 .Concat(agentUsers)
                 .ToArray();
 
-            var authorityIds = memberships
-                .Where(membership => membership.Type == "authority")
-                .Select(membership => membership.EntityId)
-                .Concat(await db.Participants.AsNoTracking().Where(participant => memberships.Where(membership => membership.Type == "participant").Select(membership => membership.EntityId).Contains(participant.Id)).Select(participant => participant.AuthorityId).ToListAsync(cancellationToken))
-                .Concat(await db.Stakeholders.AsNoTracking().Where(stakeholder => memberships.Where(membership => membership.Type == "stakeholder").Select(membership => membership.EntityId).Contains(stakeholder.Id)).Select(stakeholder => stakeholder.AuthorityId).ToListAsync(cancellationToken))
-                .Concat(await db.Agents.AsNoTracking().Where(agent => memberships.Where(membership => membership.Type == "agent").Select(membership => membership.EntityId).Contains(agent.Id)).Select(agent => agent.AuthorityId).ToListAsync(cancellationToken))
+            var participantIds = memberships.Where(membership => membership.Type == "participant").Select(membership => membership.EntityId).Distinct().ToArray();
+            var stakeholderIds = memberships.Where(membership => membership.Type == "stakeholder").Select(membership => membership.EntityId).Distinct().ToArray();
+            var agentIds = memberships.Where(membership => membership.Type == "agent").Select(membership => membership.EntityId).Distinct().ToArray();
+
+            var participants = await db.Participants.AsNoTracking()
+                .Where(participant => participantIds.Contains(participant.Id))
+                .OrderBy(participant => participant.DisplayName)
+                .ToListAsync(cancellationToken);
+            var stakeholders = await db.Stakeholders.AsNoTracking()
+                .Where(stakeholder => stakeholderIds.Contains(stakeholder.Id))
+                .OrderBy(stakeholder => stakeholder.DisplayName)
+                .ToListAsync(cancellationToken);
+            var agents = await db.Agents.AsNoTracking()
+                .Where(agent => agentIds.Contains(agent.Id))
+                .OrderBy(agent => agent.DisplayName)
+                .ToListAsync(cancellationToken);
+
+            var authorityIds = memberships.Where(membership => membership.Type == "authority").Select(membership => membership.EntityId)
+                .Concat(participants.Select(participant => participant.AuthorityId))
+                .Concat(stakeholders.Select(stakeholder => stakeholder.AuthorityId))
+                .Concat(agents.Select(agent => agent.AuthorityId))
                 .Distinct()
                 .ToArray();
+            var authorities = await db.Authorities.AsNoTracking()
+                .Where(authority => authorityIds.Contains(authority.Id))
+                .OrderBy(authority => authority.Name)
+                .ToListAsync(cancellationToken);
 
-            var optionsDto = new DemoSignInOptionsDto(
-                await db.Authorities.AsNoTracking().Where(authority => authorityIds.Contains(authority.Id)).OrderBy(authority => authority.Name).ToListAsync(cancellationToken),
-                await db.Participants.AsNoTracking().Where(participant => authorityIds.Contains(participant.AuthorityId)).OrderBy(participant => participant.DisplayName).ToListAsync(cancellationToken),
-                await db.Stakeholders.AsNoTracking().Where(stakeholder => authorityIds.Contains(stakeholder.AuthorityId)).OrderBy(stakeholder => stakeholder.DisplayName).ToListAsync(cancellationToken),
-                await db.Agents.AsNoTracking().Where(agent => authorityIds.Contains(agent.AuthorityId)).OrderBy(agent => agent.DisplayName).ToListAsync(cancellationToken),
-                users,
-                memberships);
+            var optionsDto = new DemoSignInOptionsDto(authorities, participants, stakeholders, agents, users, memberships);
 
             return Results.Ok(optionsDto);
         }).AllowAnonymous();

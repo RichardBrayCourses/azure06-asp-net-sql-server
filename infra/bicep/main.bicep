@@ -24,6 +24,10 @@ param entraTenantId string
 @description('Optional API scope requested by the UI.')
 param entraApiScope string = ''
 
+@description('Shared demo sign-in key sent by the shell when it loads pre-authentication sign-in options.')
+@secure()
+param demoSignInKey string = ''
+
 @description('The Azure App Configuration SKU.')
 @allowed([
   'free'
@@ -145,6 +149,24 @@ resource entraApiScopeConfig 'Microsoft.AppConfiguration/configurationStores/key
   name: 'VITE_ENTRA_API_SCOPE'
   properties: {
     value: entraApiScope
+    contentType: 'text/plain'
+  }
+}
+
+resource appEnvironmentConfig 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: appConfiguration
+  name: 'VITE_APP_ENVIRONMENT'
+  properties: {
+    value: environmentName
+    contentType: 'text/plain'
+  }
+}
+
+resource demoSignInKeyConfig 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: appConfiguration
+  name: 'VITE_DEMO_SIGN_IN_KEY'
+  properties: {
+    value: demoSignInKey
     contentType: 'text/plain'
   }
 }
