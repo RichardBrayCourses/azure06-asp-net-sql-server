@@ -16,10 +16,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-API_APP_NAME=$(az deployment group show \
+FUNCTION_APP_NAME=$(az deployment group show \
   --resource-group "$AZURE_RESOURCE_GROUP" \
   --name "$AZURE_DEPLOYMENT_NAME" \
-  --query "properties.outputs.apiAppName.value" \
+  --query "properties.outputs.functionAppName.value" \
   --output tsv)
 
 API_BASE_URL=$(az deployment group show \
@@ -28,20 +28,18 @@ API_BASE_URL=$(az deployment group show \
   --query "properties.outputs.apiBaseUrl.value" \
   --output tsv)
 
-if [[ -z "$API_APP_NAME" || -z "$API_BASE_URL" ]]; then
-  echo "API App Service deployment outputs were not found."
+if [[ -z "$FUNCTION_APP_NAME" || -z "$API_BASE_URL" ]]; then
+  echo "Function API deployment outputs were not found."
   echo "Run: pnpm run deploy:$ENVIRONMENT_NAME"
   exit 1
 fi
 
 echo ""
-echo "Publishing cases API for environment: $ENVIRONMENT_NAME"
+echo "Publishing Functions API for environment: $ENVIRONMENT_NAME"
 echo ""
 
-dotnet publish "$MONOREPO_DIR/services/cases-api/Cases.Api.csproj" \
+dotnet publish "$MONOREPO_DIR/services/functions-api/AllChecksOut.FunctionsApi.csproj" \
   --configuration Release \
-  --runtime win-x64 \
-  --self-contained true \
   --output "$PUBLISH_DIR"
 
 (
@@ -50,15 +48,13 @@ dotnet publish "$MONOREPO_DIR/services/cases-api/Cases.Api.csproj" \
 )
 
 echo ""
-echo "Deploying API package to: $API_APP_NAME"
+echo "Deploying Functions API package to: $FUNCTION_APP_NAME"
 echo ""
 
-az webapp deploy \
+az functionapp deployment source config-zip \
   --resource-group "$AZURE_RESOURCE_GROUP" \
-  --name "$API_APP_NAME" \
-  --src-path "$PACKAGE_FILE" \
-  --type zip \
-  --restart true \
+  --name "$FUNCTION_APP_NAME" \
+  --src "$PACKAGE_FILE" \
   --output table
 
 echo ""

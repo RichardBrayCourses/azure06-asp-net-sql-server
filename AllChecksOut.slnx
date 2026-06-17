@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/services/" />
+  <Folder Name="/services/functions-api/">
+    <Project Path="services/functions-api/AllChecksOut.FunctionsApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/functions-api.Tests/">
+    <Project Path="tests/functions-api.Tests/AllChecksOut.FunctionsApi.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MONOREPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
+DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/functions-api/Data/Migrations"
 
 echo ""
 echo "Resetting EF Core database source."
@@ -19,8 +19,8 @@ echo "Current EF Core database source:"
 echo ""
 
 dotnet ef migrations list \
-  --project "$MONOREPO_DIR/services/cases-api" \
-  --startup-project "$MONOREPO_DIR/services/cases-api" \
+  --project "$MONOREPO_DIR/services/functions-api" \
+  --startup-project "$MONOREPO_DIR/services/functions-api" \
   --no-connect
 
 echo ""

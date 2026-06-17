@@ -1,13 +1,13 @@
 {
-  "name": "azure06-asp-net-sql-server",
+  "name": "azure06-functions-sql-server",
   "private": true,
   "version": "1.0.0",
   "scripts": {
     "shell:dev:testing": "bash scripts/generate-shell-env.sh testing && pnpm -C apps/shell run dev",
     "shell:dev:staging": "bash scripts/generate-shell-env.sh staging && pnpm -C apps/shell run dev",
     "shell:dev:production": "bash scripts/generate-shell-env.sh production && pnpm -C apps/shell run dev",
-    "backend:build": "dotnet build AllChecksOut.sln",
-    "backend:test": "dotnet test AllChecksOut.sln",
+    "backend:build": "dotnet build AllChecksOut.slnx",
+    "backend:test": "dotnet test AllChecksOut.slnx",
     "migration-source:reset": "bash scripts/reset-database-source.sh",
     "database:update:testing": "bash scripts/update-database.sh testing",
     "database:update:staging": "bash scripts/update-database.sh staging",

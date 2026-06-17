@@ -31,9 +31,6 @@ param entraAudience string = ''
 @secure()
 param demoSignInKey string = ''
 
-@description('The Azure App Service Plan SKU used by the API host.')
-param apiAppServicePlanSku string = 'F1'
-
 @description('The Azure App Configuration SKU.')
 @allowed([
   'free'
@@ -55,11 +52,13 @@ var storageAccountName = take('${appName}${uniqueString(resourceGroup().id)}', 2
 var appConfigurationName = take('${appName}-cfg-${uniqueString(resourceGroup().id)}', 50)
 var sqlServerName = take('${appName}-${sqlLocation}-sql-${uniqueString(resourceGroup().id, sqlLocation)}', 63)
 var entraAuthority = uri(environment().authentication.loginEndpoint, entraTenantId)
-var apiAppServicePlanName = take('${appName}-${environmentName}-api-plan', 60)
-var apiAppName = take('${appName}-${environmentName}-api-${uniqueString(resourceGroup().id)}', 60)
-var apiBaseUrl = 'https://${apiAppName}.azurewebsites.net'
+var functionPlanName = take('${appName}-${environmentName}-func-plan', 60)
+var functionAppName = take('${appName}-${environmentName}-func-${uniqueString(resourceGroup().id)}', 60)
+var functionDeploymentContainerName = 'app-package-${take(functionAppName, 32)}'
+var apiBaseUrl = 'https://${functionAppName}.azurewebsites.net'
 var frontendOrigin = 'https://${domainName}'
 var sqlConnectionString = 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlDatabaseName};User ID=${sqlAdministratorLogin};Password=${sqlAdministratorPassword};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+var functionStorageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${websiteStorage.name};AccountKey=${websiteStorage.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
 var apiValidAudiences = empty(entraAudience)
   ? union([entraClientId], empty(entraApiScope) ? [] : [replace(entraApiScope, '/access_as_user', '')])
   : union([entraAudience, entraClientId], empty(entraApiScope) ? [] : [replace(entraApiScope, '/access_as_user', '')])
@@ -73,6 +72,17 @@ resource websiteStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   kind: 'StorageV2'
   properties: {
     allowBlobPublicAccess: true
+  }
+
+  resource blobServices 'blobServices' = {
+    name: 'default'
+
+    resource deploymentContainer 'containers' = {
+      name: functionDeploymentContainerName
+      properties: {
+        publicAccess: 'None'
+      }
+    }
   }
 }
 
@@ -110,43 +120,57 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
   name: sqlDatabaseName
   location: sqlLocation
   sku: {
-    name: 'GP_S_Gen5'
-    tier: 'GeneralPurpose'
-    family: 'Gen5'
-    capacity: 1
-  }
-  properties: {
-    autoPauseDelay: 60
-    minCapacity: json('0.5')
-    requestedBackupStorageRedundancy: 'Local'
+    name: 'Basic'
+    tier: 'Basic'
+    capacity: 5
   }
 }
 
-resource apiAppServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: apiAppServicePlanName
+resource functionPlan 'Microsoft.Web/serverfarms@2024-04-01' = {
+  name: functionPlanName
   location: location
   sku: {
-    name: apiAppServicePlanSku
+    name: 'FC1'
+    tier: 'FlexConsumption'
   }
-  kind: 'app'
+  kind: 'functionapp'
+  properties: {
+    reserved: true
+  }
 }
 
-resource casesApiApp 'Microsoft.Web/sites@2023-12-01' = {
-  name: apiAppName
+resource functionsApi 'Microsoft.Web/sites@2024-04-01' = {
+  name: functionAppName
   location: location
-  kind: 'app'
+  kind: 'functionapp,linux'
   dependsOn: [
     sqlDatabase
   ]
   properties: {
-    serverFarmId: apiAppServicePlan.id
+    serverFarmId: functionPlan.id
     httpsOnly: true
     siteConfig: {
       ftpsState: 'FtpsOnly'
       minTlsVersion: '1.2'
       appSettings: [
         {
-          name: 'ASPNETCORE_ENVIRONMENT'
+          name: 'AzureWebJobsStorage'
+          value: functionStorageConnectionString
+        }
+        {
+          name: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          value: functionStorageConnectionString
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'dotnet-isolated'
+        }
+        {
+          name: 'DOTNET_ENVIRONMENT'
           value: 'Production'
         }
         {
@@ -195,6 +219,26 @@ resource casesApiApp 'Microsoft.Web/sites@2023-12-01' = {
         }
       ]
       healthCheckPath: '/health'
+    }
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${websiteStorage.properties.primaryEndpoints.blob}${functionDeploymentContainerName}'
+          authentication: {
+            type: 'StorageAccountConnectionString'
+            storageAccountConnectionStringName: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          }
+        }
+      }
+      runtime: {
+        name: 'dotnet-isolated'
+        version: '10.0'
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: 1
+        instanceMemoryMB: 512
+      }
     }
   }
 }
@@ -273,7 +317,7 @@ resource demoSignInKeyConfig 'Microsoft.AppConfiguration/configurationStores/key
 
 output storageAccountName string = websiteStorage.name
 output appConfigurationName string = appConfiguration.name
-output apiAppName string = casesApiApp.name
+output functionAppName string = functionsApi.name
 output apiBaseUrl string = apiBaseUrl
 output sqlServerName string = sqlServer.name
 output sqlServerFullyQualifiedDomainName string = sqlServer.properties.fullyQualifiedDomainName

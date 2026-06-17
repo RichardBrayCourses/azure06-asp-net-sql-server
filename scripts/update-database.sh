@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh" "${1:-}"
 
 TARGET_DATABASE_VERSION="${2:-}"
-DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/cases-api/Data/Migrations"
+DATABASE_SOURCE_DIR="$MONOREPO_DIR/services/functions-api/Data/Migrations"
 
 ensure_initial_database_source() {
   mkdir -p "$DATABASE_SOURCE_DIR"
@@ -20,8 +20,8 @@ ensure_initial_database_source() {
   echo ""
 
   dotnet ef migrations add InitialSqlFoundation \
-    --project "$MONOREPO_DIR/services/cases-api" \
-    --startup-project "$MONOREPO_DIR/services/cases-api" \
+    --project "$MONOREPO_DIR/services/functions-api" \
+    --startup-project "$MONOREPO_DIR/services/functions-api" \
     --output-dir Data/Migrations
 }
 
@@ -85,13 +85,13 @@ echo ""
 update_database() {
   if [[ -n "$TARGET_DATABASE_VERSION" ]]; then
     dotnet ef database update "$TARGET_DATABASE_VERSION" \
-      --project services/cases-api \
-      --startup-project services/cases-api \
+      --project services/functions-api \
+      --startup-project services/functions-api \
       --connection "$AZURE_SQL_CONNECTION_STRING"
   else
     dotnet ef database update \
-      --project services/cases-api \
-      --startup-project services/cases-api \
+      --project services/functions-api \
+      --startup-project services/functions-api \
       --connection "$AZURE_SQL_CONNECTION_STRING"
   fi
 }
