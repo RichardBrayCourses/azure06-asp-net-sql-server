@@ -17,11 +17,30 @@ ensure_key_vault() {
   if az keyvault list-deleted \
     --query "[?name=='$AZURE_KEY_VAULT_NAME'] | [0].name" \
     --output tsv | grep -q "^$AZURE_KEY_VAULT_NAME$"; then
-    echo "Purging deleted Azure Key Vault before recreating it: $AZURE_KEY_VAULT_NAME" >&2
+    echo "Requesting purge for deleted Azure Key Vault before recreating it: $AZURE_KEY_VAULT_NAME" >&2
     az keyvault purge \
       --name "$AZURE_KEY_VAULT_NAME" \
       --location "$AZURE_LOCATION" \
+      --no-wait \
       --output none
+
+    echo "Waiting for Azure to release Key Vault name: $AZURE_KEY_VAULT_NAME" >&2
+    for attempt in {1..20}; do
+      if ! az keyvault list-deleted \
+        --query "[?name=='$AZURE_KEY_VAULT_NAME'] | [0].name" \
+        --output tsv | grep -q "^$AZURE_KEY_VAULT_NAME$"; then
+        break
+      fi
+
+      if [[ "$attempt" == "20" ]]; then
+        echo "Timed out waiting for deleted Azure Key Vault to purge: $AZURE_KEY_VAULT_NAME" >&2
+        echo "In Azure Portal, open Key vaults, choose Manage deleted vaults, and purge $AZURE_KEY_VAULT_NAME." >&2
+        exit 1
+      fi
+
+      echo "Still waiting for Key Vault purge to complete: $AZURE_KEY_VAULT_NAME ($attempt/20)" >&2
+      sleep 15
+    done
   fi
 
   echo "Creating Azure Key Vault: $AZURE_KEY_VAULT_NAME"
